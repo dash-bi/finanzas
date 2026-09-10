@@ -1,0 +1,541 @@
+/* ============================================================
+   app.js — Arranque, acceso, layout y enrutamiento
+   ============================================================ */
+
+window.ERP = window.ERP || {};
+
+/* ============================================================
+   Configuración del sistema (solo administrador)
+   ============================================================ */
+
+ERP.configuracion = (() => {
+    const U = ERP.util;
+    const { el } = U;
+    const ui = ERP.ui;
+    const db = ERP.db;
+
+    const vista = (contenedor) => {
+        const cfg = db.config();
+
+        const campos = {
+            empresa: ui.input({ valor: cfg.empresa }),
+            nit: ui.input({ valor: cfg.nit }),
+            direccion: ui.input({ valor: cfg.direccion }),
+            ciudad: ui.input({ valor: cfg.ciudad }),
+            telefono: ui.input({ valor: cfg.telefono }),
+            email: ui.input({ tipo: 'email', valor: cfg.email }),
+            ivaPct: ui.input({ tipo: 'number', valor: cfg.ivaPct, numerico: true, min: 0, max: 100, step: 1 }),
+            capitalInicial: ui.input({ tipo: 'number', valor: cfg.capitalInicial, numerico: true, min: 0, step: 1000000 }),
+            salarioMinimo: ui.input({ tipo: 'number', valor: cfg.salarioMinimo, numerico: true, min: 0, step: 10000 }),
+            auxilioTransporte: ui.input({ tipo: 'number', valor: cfg.auxilioTransporte, numerico: true, min: 0, step: 10000 }),
+            topeAuxilioSmmlv: ui.input({ tipo: 'number', valor: cfg.topeAuxilioSmmlv, numerico: true, min: 0, step: 1 }),
+            aporteSaludPct: ui.input({ tipo: 'number', valor: cfg.aporteSaludPct, numerico: true, min: 0, max: 100, step: 0.5 }),
+            aportePensionPct: ui.input({ tipo: 'number', valor: cfg.aportePensionPct, numerico: true, min: 0, max: 100, step: 0.5 })
+        };
+
+        const guardar = () => {
+            const ivaPct = U.toNumber(campos.ivaPct.value);
+            if (ivaPct < 0 || ivaPct > 100) {
+                ui.toastError('IVA inválido', 'El porcentaje debe estar entre 0 y 100.');
+                return;
+            }
+            if (!campos.empresa.value.trim()) {
+                ui.toastError('Falta el nombre de la empresa', 'Es obligatorio para emitir facturas.');
+                return;
+            }
+
+            db.updateConfig({
+                empresa: campos.empresa.value.trim(),
+                nit: campos.nit.value.trim(),
+                direccion: campos.direccion.value.trim(),
+                ciudad: campos.ciudad.value.trim(),
+                telefono: campos.telefono.value.trim(),
+                email: campos.email.value.trim(),
+                ivaPct,
+                capitalInicial: U.roundCop(campos.capitalInicial.value),
+                salarioMinimo: U.roundCop(campos.salarioMinimo.value),
+                auxilioTransporte: U.roundCop(campos.auxilioTransporte.value),
+                topeAuxilioSmmlv: U.toNumber(campos.topeAuxilioSmmlv.value),
+                aporteSaludPct: U.toNumber(campos.aporteSaludPct.value),
+                aportePensionPct: U.toNumber(campos.aportePensionPct.value)
+            });
+
+            ui.toastOk('Configuración guardada', 'Los estados financieros se recalcularon con los nuevos parámetros.');
+        };
+
+        const btnGuardar = el('button', {
+            class: 'btn', text: 'Guardar configuración', attrs: { type: 'button' },
+            on: { click: guardar }
+        });
+
+        const btnExportar = el('button', {
+            class: 'btn btn-secondary', text: '⤓ Exportar datos (JSON)', attrs: { type: 'button' },
+            on: {
+                click: () => {
+                    U.downloadBlob(
+                        new Blob([db.exportJSON()], { type: 'application/json' }),
+                        `respaldo-erp-${U.today()}.json`
+                    );
+                    ui.toastOk('Respaldo generado', 'Guarde el archivo en un lugar seguro.');
+                }
+            }
+        });
+
+        const btnReiniciar = el('button', {
+            class: 'btn btn-danger', text: 'Reiniciar datos de demostración', attrs: { type: 'button' },
+            on: {
+                click: async () => {
+                    const ok = await ui.confirmar({
+                        titulo: 'Reiniciar todos los datos',
+                        mensaje: '¿Borrar toda la información y regenerar los datos de demostración?',
+                        detalle: 'Se perderán clientes, facturas, compras, gastos y nóminas registrados. Exporte un respaldo antes si desea conservarlos.',
+                        textoAceptar: 'Borrar y regenerar',
+                        peligroso: true
+                    });
+                    if (!ok) return;
+                    db.reset();
+                    ui.toastOk('Datos regenerados', 'La demostración volvió a su estado inicial.');
+                }
+            }
+        });
+
+        const usuarios = db.all('usuarios');
+
+        U.appendAll(contenedor, [
+            el('div', { class: 'view-head' }, [
+                el('div', { class: 'grow' }, [
+                    el('h1', { text: 'Configuración' }),
+                    el('p', { text: 'Datos de la empresa y parámetros de cálculo que alimentan facturas, impuestos y nómina.' })
+                ])
+            ]),
+
+            ui.card('Datos de la empresa', el('div', { class: 'grid-form' }, [
+                ui.campo('Razón social', campos.empresa, { clase: 'span-full' }),
+                ui.campo('NIT', campos.nit),
+                ui.campo('Teléfono', campos.telefono),
+                ui.campo('Dirección', campos.direccion, { clase: 'span-full' }),
+                ui.campo('Ciudad', campos.ciudad),
+                ui.campo('Correo electrónico', campos.email)
+            ]), { subtitulo: 'Aparecen en el encabezado de las facturas y reportes PDF' }),
+
+            ui.card('Parámetros contables', el('div', { class: 'grid-form' }, [
+                ui.campo('IVA (%)', campos.ivaPct, { ayuda: 'Se aplica solo a los ítems marcados como gravados.' }),
+                ui.campo('Capital inicial', campos.capitalInicial, { ayuda: 'Saldo de caja con el que arranca el balance general.' })
+            ])),
+
+            ui.card('Parámetros de nómina', el('div', { class: 'stack' }, [
+                el('div', { class: 'grid-form' }, [
+                    ui.campo('Salario mínimo vigente', campos.salarioMinimo),
+                    ui.campo('Auxilio de transporte', campos.auxilioTransporte),
+                    ui.campo('Tope de auxilio (en SMMLV)', campos.topeAuxilioSmmlv),
+                    ui.campo('Aporte a salud (%)', campos.aporteSaludPct),
+                    ui.campo('Aporte a pensión (%)', campos.aportePensionPct)
+                ]),
+                ui.banner('Estos valores cambian cada año',
+                    'El salario mínimo y el auxilio de transporte se fijan por decreto. Actualícelos en enero de cada año para que la liquidación de nómina siga siendo correcta.',
+                    'warning')
+            ])),
+
+            ui.card('Usuarios del sistema', el('div', { class: 'table-wrap' }, [
+                el('table', { class: 'data' }, [
+                    el('thead', {}, [el('tr', {}, [
+                        el('th', { text: 'Usuario', attrs: { scope: 'col' } }),
+                        el('th', { text: 'Nombre', attrs: { scope: 'col' } }),
+                        el('th', { text: 'Rol', attrs: { scope: 'col' } }),
+                        el('th', { text: 'Módulos con acceso', attrs: { scope: 'col' } })
+                    ])]),
+                    el('tbody', {}, usuarios.map((u) => el('tr', {}, [
+                        el('td', { class: 'strong', text: u.usuario }),
+                        el('td', { text: u.nombre }),
+                        el('td', {}, [ui.badge(ERP.auth.etiquetaRol(u.rol), 'info')]),
+                        el('td', { class: 'num', text: U.num((ERP.auth.PERMISOS[u.rol] || []).length) })
+                    ])))
+                ])
+            ]), {
+                sinRelleno: true,
+                pie: el('p', {
+                    class: 'text-muted',
+                    text: 'La autenticación local separa responsabilidades dentro de la aplicación, pero no es un control de seguridad. Al conectar Supabase debe delegarse en Supabase Auth con Row Level Security.'
+                })
+            }),
+
+            ui.card('Datos y respaldo', el('div', { class: 'stack' }, [
+                el('p', {
+                    class: 'text-muted',
+                    text: `La información se guarda en el navegador (localStorage). ${db.persistente ? 'La persistencia está activa.' : 'ATENCIÓN: el navegador bloqueó el almacenamiento; los cambios se perderán al recargar.'}`
+                }),
+                el('div', { class: 'row row-wrap' }, [btnExportar, btnReiniciar])
+            ])),
+
+            el('div', { class: 'row row-wrap' }, [btnGuardar])
+        ]);
+    };
+
+    return { vista };
+})();
+
+/* ============================================================
+   Aplicación
+   ============================================================ */
+
+ERP.app = (() => {
+    const U = ERP.util;
+    const { el } = U;
+    const ui = ERP.ui;
+
+    const TEMA_KEY = 'erp_finanzas_tema';
+
+    const MODULOS = {
+        dashboard: { etiqueta: 'Tablero ejecutivo', icono: '◈', grupo: 'Operación', render: (c) => ERP.dashboard.vista(c) },
+        ventas: { etiqueta: 'Ventas', icono: '▤', grupo: 'Operación', render: (c) => ERP.ventas.vista(c) },
+        cartera: { etiqueta: 'Cartera y abonos', icono: '◷', grupo: 'Operación', render: (c) => ERP.cartera.vista(c) },
+        compras: { etiqueta: 'Compras', icono: '↓', grupo: 'Operación', render: (c) => ERP.compras.vista(c) },
+        gastos: { etiqueta: 'Gastos', icono: '◇', grupo: 'Operación', render: (c) => ERP.gastos.vista(c) },
+        inventario: { etiqueta: 'Inventario', icono: '▦', grupo: 'Operación', render: (c) => ERP.inventario.vista(c) },
+        clientes: { etiqueta: 'Clientes', icono: '◉', grupo: 'Terceros', render: (c) => ERP.contactos.vistaClientes(c) },
+        proveedores: { etiqueta: 'Proveedores', icono: '◎', grupo: 'Terceros', render: (c) => ERP.contactos.vistaProveedores(c) },
+        financieros: { etiqueta: 'Estados financieros', icono: '▧', grupo: 'Análisis', render: (c) => ERP.estadosFinancieros.vista(c) },
+        equilibrio: { etiqueta: 'Punto de equilibrio', icono: '⟁', grupo: 'Análisis', render: (c) => ERP.equilibrio.vista(c) },
+        prestamos: { etiqueta: 'Simulador de préstamos', icono: '≡', grupo: 'Análisis', render: (c) => ERP.prestamos.vista(c) },
+        nomina: { etiqueta: 'Nómina', icono: '◫', grupo: 'Administración', render: (c) => ERP.nomina.vista(c) },
+        configuracion: { etiqueta: 'Configuración', icono: '⚙', grupo: 'Administración', render: (c) => ERP.configuracion.vista(c) }
+    };
+
+    /** Orden en que se muestran los grupos del menú lateral. */
+    const GRUPOS = ['Operación', 'Terceros', 'Análisis', 'Administración'];
+
+    const estado = {
+        vista: 'dashboard',
+        colapsado: false,
+        cajonAbierto: false
+    };
+
+    let raiz = null;
+
+    /* ---------- Tema ---------- */
+
+    const temaGuardado = () => {
+        try {
+            return window.localStorage.getItem(TEMA_KEY);
+        } catch (error) {
+            return null;
+        }
+    };
+
+    const aplicarTema = (tema) => {
+        document.documentElement.setAttribute('data-theme', tema);
+        try {
+            window.localStorage.setItem(TEMA_KEY, tema);
+        } catch (error) {
+            // Sin almacenamiento el tema simplemente no se recuerda.
+        }
+    };
+
+    const temaActual = () => document.documentElement.getAttribute('data-theme') || 'light';
+
+    /* ---------- Pantalla de acceso ---------- */
+
+    const pantallaAcceso = () => {
+        U.clear(raiz);
+
+        const usuario = ui.input({ placeholder: 'admin', autocomplete: 'username' });
+        const clave = ui.input({ tipo: 'password', placeholder: '••••••••', autocomplete: 'current-password' });
+        const errores = el('div');
+
+        const btnEntrar = el('button', { class: 'btn', text: 'Ingresar', attrs: { type: 'submit' }, style: { width: '100%' } });
+
+        const formulario = el('form', { class: 'stack' }, [
+            errores,
+            ui.campo('Usuario', usuario),
+            ui.campo('Contraseña', clave),
+            btnEntrar
+        ]);
+
+        formulario.addEventListener('submit', (event) => {
+            event.preventDefault();
+            U.clear(errores);
+
+            const res = ERP.auth.iniciarSesion(usuario.value, clave.value);
+            if (!res.ok) {
+                errores.appendChild(ui.banner('No fue posible ingresar', res.error, 'danger'));
+                clave.value = '';
+                clave.focus();
+                return;
+            }
+            montarAplicacion();
+            ui.toastOk(`Bienvenida, ${res.usuario.nombre}`, ERP.auth.etiquetaRol(res.usuario.rol));
+        });
+
+        const credenciales = el('div', { class: 'login-hint' }, [
+            el('p', { class: 'strong', text: 'Usuarios de demostración' }),
+            el('ul', {}, [
+                ['admin', 'admin123', 'Administrador'],
+                ['contador', 'conta123', 'Contador'],
+                ['vendedor', 'venta123', 'Vendedor']
+            ].map(([u, c, rol]) => el('li', {}, [
+                el('code', { text: `${u} / ${c}` }),
+                el('span', { text: ` — ${rol}` })
+            ])))
+        ]);
+
+        raiz.appendChild(el('div', { class: 'login-screen' }, [
+            el('main', { class: 'login-card' }, [
+                el('div', { class: 'login-brand' }, [
+                    el('img', { attrs: { src: 'assets/IMG/logo.svg', alt: '' } }),
+                    el('div', {}, [
+                        el('h1', { text: 'Gestión Financiera' }),
+                        el('p', { text: ERP.db.config().empresa })
+                    ])
+                ]),
+                formulario,
+                credenciales
+            ])
+        ]));
+
+        usuario.focus();
+    };
+
+    /* ---------- Layout ---------- */
+
+    const construirSidebar = () => {
+        const nav = el('nav', { class: 'sidebar-nav', attrs: { 'aria-label': 'Módulos del sistema' } });
+
+        const bajoMinimo = ERP.db.productosBajoMinimo().length;
+        const vencidas = ERP.db.all('ventas').filter(
+            (v) => ERP.db.estadoVenta(v).clave === 'vencida').length;
+
+        const permitidos = ERP.auth.modulosPermitidos();
+
+        // El menú se arma por grupos, no por el orden de la lista de
+        // permisos: así cada encabezado aparece una sola vez.
+        GRUPOS.forEach((grupo) => {
+            const claves = Object.keys(MODULOS).filter(
+                (clave) => MODULOS[clave].grupo === grupo && permitidos.includes(clave));
+            if (claves.length === 0) return;
+
+            nav.appendChild(el('p', { class: 'nav-group-label', text: grupo }));
+
+            claves.forEach((clave) => {
+                const modulo = MODULOS[clave];
+                const insignia = clave === 'inventario' && bajoMinimo ? bajoMinimo
+                    : clave === 'cartera' && vencidas ? vencidas : null;
+
+                nav.appendChild(el('button', {
+                    class: 'nav-item',
+                    attrs: {
+                        type: 'button',
+                        title: modulo.etiqueta,
+                        'aria-current': estado.vista === clave ? 'page' : null
+                    },
+                    on: { click: () => irA(clave) }
+                }, [
+                    el('span', { class: 'nav-icon', text: modulo.icono, attrs: { 'aria-hidden': 'true' } }),
+                    el('span', { class: 'nav-label', text: modulo.etiqueta }),
+                    insignia ? el('span', { class: 'nav-badge', text: String(insignia) }) : null
+                ]));
+            });
+        });
+
+        return el('aside', { class: 'sidebar' }, [
+            el('div', { class: 'sidebar-head' }, [
+                el('img', { attrs: { src: 'assets/IMG/logo.svg', alt: '' } }),
+                el('div', { class: 'sidebar-title' }, [
+                    el('span', { text: 'ERP Financiero', style: { fontWeight: '700', fontSize: '0.9rem' } }),
+                    el('span', { text: U.truncate(ERP.db.config().empresa, 26) })
+                ])
+            ]),
+            nav
+        ]);
+    };
+
+    const construirTopbar = () => {
+        const usuario = ERP.auth.usuario();
+        const modulo = MODULOS[estado.vista];
+
+        const btnMenu = el('button', {
+            class: 'icon-btn', text: '☰',
+            attrs: { type: 'button', 'aria-label': 'Mostrar u ocultar el menú lateral' },
+            on: {
+                click: () => {
+                    const esMovil = window.matchMedia('(max-width: 860px)').matches;
+                    if (esMovil) {
+                        estado.cajonAbierto = !estado.cajonAbierto;
+                    } else {
+                        estado.colapsado = !estado.colapsado;
+                    }
+                    actualizarShell();
+                }
+            }
+        });
+
+        const btnTema = el('button', {
+            class: 'icon-btn',
+            text: temaActual() === 'dark' ? '☀' : '☾',
+            attrs: {
+                type: 'button',
+                'aria-label': temaActual() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'
+            },
+            on: {
+                click: () => {
+                    const nuevo = temaActual() === 'dark' ? 'light' : 'dark';
+                    aplicarTema(nuevo);
+                    montarAplicacion();
+                }
+            }
+        });
+
+        const btnSalir = el('button', {
+            class: 'icon-btn', text: '⏻',
+            attrs: { type: 'button', 'aria-label': 'Cerrar sesión' },
+            on: {
+                click: async () => {
+                    const ok = await ui.confirmar({
+                        titulo: 'Cerrar sesión',
+                        mensaje: '¿Desea salir del sistema?',
+                        detalle: 'Los datos registrados quedan guardados en este navegador.',
+                        textoAceptar: 'Cerrar sesión'
+                    });
+                    if (ok) {
+                        ERP.auth.cerrarSesion();
+                        pantallaAcceso();
+                    }
+                }
+            }
+        });
+
+        return el('header', { class: 'topbar' }, [
+            btnMenu,
+            el('div', {}, [
+                el('h1', { text: modulo ? modulo.etiqueta : 'Sistema' }),
+                el('p', { class: 'topbar-sub', text: U.fmtDateLong(U.today()) })
+            ]),
+            el('div', { class: 'topbar-spacer' }),
+            btnTema,
+            el('div', { class: 'user-chip' }, [
+                el('span', { class: 'avatar', text: U.initials(usuario.nombre) }),
+                el('div', {}, [
+                    el('p', { class: 'user-name', text: usuario.nombre }),
+                    el('p', { class: 'user-role', text: ERP.auth.etiquetaRol(usuario.rol) })
+                ])
+            ]),
+            btnSalir
+        ]);
+    };
+
+    const actualizarShell = () => {
+        const shell = document.querySelector('.app-shell');
+        if (!shell) return;
+        shell.classList.toggle('is-collapsed', estado.colapsado);
+        shell.classList.toggle('is-drawer-open', estado.cajonAbierto);
+
+        const scrim = document.querySelector('.scrim');
+        if (estado.cajonAbierto && !scrim) {
+            shell.appendChild(el('div', {
+                class: 'scrim',
+                on: { click: () => { estado.cajonAbierto = false; actualizarShell(); } }
+            }));
+        } else if (!estado.cajonAbierto && scrim) {
+            scrim.remove();
+        }
+    };
+
+    const irA = (clave) => {
+        if (!ERP.auth.puede(clave)) {
+            ui.toastError('Sin permiso', 'Su rol no tiene acceso a este módulo.');
+            return;
+        }
+        estado.vista = clave;
+        estado.cajonAbierto = false;
+        montarAplicacion();
+    };
+
+    const pintarVista = (contenedor) => {
+        U.clear(contenedor);
+        const modulo = MODULOS[estado.vista];
+
+        if (!modulo || !ERP.auth.puede(estado.vista)) {
+            contenedor.appendChild(ui.estadoError('Módulo no disponible',
+                'El módulo solicitado no existe o su rol no tiene acceso a él.'));
+            return;
+        }
+
+        try {
+            modulo.render(contenedor);
+        } catch (error) {
+            console.error(`Error al renderizar el módulo "${estado.vista}"`, error);
+            U.clear(contenedor);
+            contenedor.appendChild(ui.estadoError('No fue posible mostrar el módulo',
+                'Ocurrió un error inesperado. Revise la consola del navegador para más detalle.'));
+        }
+    };
+
+    const montarAplicacion = () => {
+        U.clear(raiz);
+
+        const contenedorVista = el('div', { class: 'view' });
+
+        const shell = el('div', { class: 'app-shell' }, [
+            construirSidebar(),
+            el('div', { class: 'main-area' }, [
+                construirTopbar(),
+                el('main', { class: 'view-scroll', attrs: { id: 'contenido', tabindex: '-1' } }, [contenedorVista])
+            ])
+        ]);
+
+        raiz.appendChild(shell);
+        actualizarShell();
+        pintarVista(contenedorVista);
+    };
+
+    /* ---------- Arranque ---------- */
+
+    const iniciar = () => {
+        raiz = document.getElementById('app');
+        if (!raiz) return;
+
+        aplicarTema(temaGuardado()
+            || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+
+        const carga = ERP.db.load();
+
+        if (!carga.persistente) {
+            ui.toastWarn('Almacenamiento no disponible',
+                'El navegador bloqueó localStorage: los cambios no se conservarán al recargar la página.');
+        }
+
+        // Al cambiar los datos se repinta la vista activa para que
+        // KPIs, gráficos y tablas nunca queden desincronizados.
+        const repintar = U.debounce(() => {
+            if (ERP.auth.usuario()) montarAplicacion();
+        }, 90);
+        U.bus.on('db:changed', repintar);
+
+        U.bus.on('db:persist-error', () => {
+            ui.toastError('No se pudo guardar',
+                'El almacenamiento del navegador está lleno o bloqueado. Exporte un respaldo desde Configuración.');
+        });
+
+        // El menú lateral pasa de colapsable a cajón según el ancho.
+        window.addEventListener('resize', U.debounce(() => {
+            if (!window.matchMedia('(max-width: 860px)').matches && estado.cajonAbierto) {
+                estado.cajonAbierto = false;
+                actualizarShell();
+            }
+        }, 200));
+
+        if (ERP.auth.restaurarSesion()) {
+            montarAplicacion();
+        } else {
+            pantallaAcceso();
+        }
+
+        if (carga.seeded) {
+            window.setTimeout(() => ui.toastInfo('Datos de demostración cargados',
+                'Puede auditar cada módulo de inmediato. Reinícielos o expórtelos desde Configuración.'), 900);
+        }
+    };
+
+    return { iniciar, irA, MODULOS, estado };
+})();
+
+document.addEventListener('DOMContentLoaded', ERP.app.iniciar);

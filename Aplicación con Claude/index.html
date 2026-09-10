@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ERP y sistema de gestión financiera integral: inventario, facturación, cartera, estados financieros e indicadores en tiempo real.">
+    <meta name="color-scheme" content="light dark">
+    <title>ERP y Gestión Financiera Integral</title>
+
+    <link rel="icon" href="assets/IMG/logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="assets/CSS/base.css">
+    <link rel="stylesheet" href="assets/CSS/layout.css">
+    <link rel="stylesheet" href="assets/CSS/components.css">
+</head>
+<body>
+
+    <a class="visually-hidden" href="#contenido">Saltar al contenido principal</a>
+
+    <div id="app" role="application" aria-label="Sistema de gestión financiera"></div>
+
+    <noscript>
+        <div style="max-width:640px;margin:64px auto;padding:24px;border:1px solid #dde3ed;border-radius:16px;font-family:system-ui,sans-serif">
+            <h1 style="margin:0 0 12px">JavaScript está desactivado</h1>
+            <p style="margin:0;color:#5b6779">
+                Esta aplicación calcula inventario, cartera y estados financieros en el navegador.
+                Active JavaScript para poder utilizarla.
+            </p>
+        </div>
+    </noscript>
+
+    <!-- Capa base: utilidades, datos y componentes -->
+    <script src="assets/JS/util.js"></script>
+    <script src="assets/JS/db.js"></script>
+    <script src="assets/JS/ui.js"></script>
+    <script src="assets/JS/charts.js"></script>
+    <script src="assets/JS/pdf.js"></script>
+    <script src="assets/JS/lines.js"></script>
+    <script src="assets/JS/auth.js"></script>
+
+    <!-- Módulos de negocio -->
+    <script src="assets/JS/contacts.js"></script>
+    <script src="assets/JS/inventory.js"></script>
+    <script src="assets/JS/purchases.js"></script>
+    <script src="assets/JS/billing.js"></script>
+
+    <!-- Análisis: el motor financiero debe cargarse antes del tablero -->
+    <script src="assets/JS/financials.js"></script>
+    <script src="assets/JS/dashboard.js"></script>
+    <script src="assets/JS/tools.js"></script>
+    <script src="assets/JS/payroll.js"></script>
+
+    <!-- Arranque -->
+    <script src="assets/JS/app.js"></script>
+
+</body>
+</html>

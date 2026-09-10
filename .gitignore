@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------
+# Construcción anterior, superada por "Aplicación con Claude/".
+# Se conserva en disco pero no se publica: tener un segundo
+# index.html en la raíz haría que GitHub Pages sirviera la app
+# equivocada.
+# ---------------------------------------------------------------
+/index.html
+/app.js
+/styles.css
+/modules/
+/serve.py
+/iniciar_app.bat
+/iniciar_app.ps1
+
+# --- Secretos: nunca deben llegar al repositorio ---
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.json
+credentials.json
+config.local.*
+
+# --- Respaldos exportados desde la aplicación (contienen datos reales) ---
+respaldo-erp-*.json
+
+# --- Ruido del sistema operativo y del editor ---
+Thumbs.db
+desktop.ini
+.DS_Store
+*~
+*.tmp
+*.bak
+.vscode/
+.idea/
