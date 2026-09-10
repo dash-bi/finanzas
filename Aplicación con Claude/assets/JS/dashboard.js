@@ -265,7 +265,8 @@ ERP.dashboard = (() => {
                         'info')
                     : null,
 
-                el('div', { class: 'grid-kpi' }, [
+                // Diez indicadores en dos filas de cinco (en pantallas angostas se reacomodan).
+                el('div', { class: 'grid-kpi grid-kpi-5' }, [
                     ui.kpi('Ingresos totales', U.money(datos.ingresos),
                         `${datos.numeroFacturas} facturas · ${U.num(datos.unidades)} unidades`, 'var(--c1)'),
                     ui.kpi('Costo de ventas', U.money(datos.costoVentas),
@@ -278,10 +279,7 @@ ERP.dashboard = (() => {
                         `${pendientes.length} facturas con saldo`, 'var(--c4)'),
                     ui.kpi('Valor del inventario', U.money(inventarioValor),
                         bajoMinimo.length ? `${bajoMinimo.length} ítems por reponer` : 'Existencias en nivel adecuado',
-                        'var(--c5)')
-                ]),
-
-                el('div', { class: 'grid-kpi' }, [
+                        'var(--c5)'),
                     ui.kpi('Resultado del periodo', U.money(utilidadOperacional),
                         utilidadOperacional >= 0 ? 'Utilidad después de gastos' : 'Pérdida después de gastos',
                         utilidadOperacional >= 0 ? 'var(--c2)' : 'var(--c6)'),

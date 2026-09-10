@@ -118,6 +118,7 @@ ERP.db = (() => {
                     if (parsed && parsed.version === SCHEMA_VERSION && Array.isArray(parsed.ventas)) {
                         data = { ...emptySchema(), ...parsed };
                         data.config = { ...emptySchema().config, ...(parsed.config || {}) };
+                        if (migrar()) persist();
                         return { ok: true, seeded: false, persistente: true };
                     }
                 }
@@ -141,6 +142,33 @@ ERP.db = (() => {
     };
 
     const exportJSON = () => JSON.stringify(data, null, 2);
+
+    /**
+     * Migraciones no destructivas sobre datos ya guardados. Nunca borran:
+     * solo completan campos nuevos a partir de la información existente.
+     * Devuelve true si cambió algo.
+     */
+    const migrar = () => {
+        let cambios = false;
+        const empleados = Array.isArray(data.empleados) ? data.empleados : [];
+
+        // Las ventas antiguas guardaban el vendedor como texto libre.
+        // Se enlazan al empleado de nómina cuando el nombre coincide sin ambigüedad.
+        data.ventas.forEach((venta) => {
+            if (venta.vendedorId || !venta.vendedor) return;
+            const nombre = U.normalize(venta.vendedor).trim();
+            const coincidencias = empleados.filter((e) => {
+                const completo = U.normalize(e.nombre).trim();
+                return completo === nombre || completo.startsWith(`${nombre} `) || nombre.startsWith(`${completo} `);
+            });
+            if (coincidencias.length === 1) {
+                venta.vendedorId = coincidencias[0].id;
+                venta.vendedor = coincidencias[0].nombre;
+                cambios = true;
+            }
+        });
+        return cambios;
+    };
 
     /* ============================================================
        Acceso genérico (CRUD)
@@ -305,6 +333,68 @@ ERP.db = (() => {
         return null;
     };
 
+    /** Trazabilidad de documentos importados desde PDF. Solo guarda lo que existe. */
+    const metadatosArchivo = (payload) => {
+        const meta = {};
+        if (payload.archivoOrigen) meta.archivoOrigen = String(payload.archivoOrigen).slice(0, 180);
+        if (payload.referenciaExterna) meta.referenciaExterna = String(payload.referenciaExterna).trim().slice(0, 60);
+        if (payload.cufe) meta.cufe = String(payload.cufe).trim().toLowerCase();
+        return meta;
+    };
+
+    const metadatosOrigen = (payload) => ({
+        origen: payload.origen === 'pdf' ? 'pdf' : 'manual',
+        ...metadatosArchivo(payload)
+    });
+
+    /** Costo por unidad que realmente entra al inventario: neto de descuento. */
+    const costoNetoCompra = (item) => U.toNumber(item.valorUnitario) * (1 - U.toNumber(item.descuentoPct) / 100);
+
+    /**
+     * Planifica movimientos de inventario (cantidad positiva entra, negativa
+     * sale) valorizando cada uno a su costo. Trabaja por producto sobre el
+     * valor total —existencia × costo— para que el promedio ponderado quede
+     * exacto al revertir o corregir documentos. No toca nada hasta aplicar().
+     */
+    const planificarInventario = (movimientos, contexto) => {
+        const porProducto = new Map();
+        movimientos.forEach((mov) => {
+            const producto = productoPorId(mov.productoId);
+            if (!producto || producto.tipo !== 'producto') return;
+            const plan = porProducto.get(producto.id) || {
+                producto,
+                cantidad: U.toNumber(producto.stock),
+                valor: U.toNumber(producto.stock) * U.toNumber(producto.costo)
+            };
+            plan.cantidad += U.toNumber(mov.cantidad);
+            plan.valor += U.toNumber(mov.cantidad) * U.toNumber(mov.costoUnitario);
+            porProducto.set(producto.id, plan);
+        });
+
+        for (const plan of porProducto.values()) {
+            if (plan.cantidad < -0.0001) {
+                const faltan = `${U.num(-plan.cantidad, 2)} ${plan.producto.unidad}`;
+                return {
+                    ok: false,
+                    error: contexto === 'compra'
+                        ? `No se puede reducir la compra de "${plan.producto.nombre}": esas unidades ya salieron del inventario (faltan ${faltan}).`
+                        : `Existencias insuficientes de "${plan.producto.nombre}" (faltan ${faltan}).`
+                };
+            }
+        }
+
+        return {
+            ok: true,
+            productos: [...porProducto.values()].map((p) => p.producto),
+            aplicar: () => {
+                porProducto.forEach((plan) => {
+                    plan.producto.stock = U.round2(plan.cantidad);
+                    if (plan.cantidad > 0.0001) plan.producto.costo = Math.max(0, U.roundCop(plan.valor / plan.cantidad));
+                });
+            }
+        };
+    };
+
     /**
      * Registra una compra: aumenta existencias y recalcula el costo
      * promedio ponderado de cada producto. Si es a crédito, abre la CxP.
@@ -341,7 +431,8 @@ ERP.db = (() => {
             total: totales.total,
             saldo: credito ? totales.total : 0,
             medioPago: payload.medioPago || 'Transferencia',
-            observaciones: String(payload.observaciones || '').trim()
+            observaciones: String(payload.observaciones || '').trim(),
+            ...metadatosOrigen(payload)
         };
 
         // Entrada a inventario con costo promedio ponderado.
@@ -351,7 +442,7 @@ ERP.db = (() => {
             const stockPrevio = U.toNumber(producto.stock);
             const costoPrevio = U.toNumber(producto.costo);
             const stockNuevo = stockPrevio + item.cantidad;
-            const costoUnitario = U.toNumber(item.valorUnitario);
+            const costoUnitario = costoNetoCompra(item);
             producto.costo = stockNuevo > 0
                 ? U.roundCop(((stockPrevio * costoPrevio) + (item.cantidad * costoUnitario)) / stockNuevo)
                 : costoUnitario;
@@ -428,6 +519,7 @@ ERP.db = (() => {
             numero: consumirNumero('venta'),
             fecha: payload.fecha,
             clienteId: payload.clienteId,
+            vendedorId: payload.vendedorId || '',
             vendedor: payload.vendedor || '',
             condicion: credito ? 'credito' : 'contado',
             diasCredito,
@@ -439,7 +531,8 @@ ERP.db = (() => {
             saldo: credito ? totales.total : 0,
             medioPago: credito ? '' : (payload.medioPago || 'Efectivo'),
             observaciones: String(payload.observaciones || '').trim(),
-            anulada: false
+            anulada: false,
+            ...metadatosOrigen(payload)
         };
 
         // Salida de inventario en tiempo real.
@@ -468,11 +561,12 @@ ERP.db = (() => {
             return { ok: false, error: 'No se puede anular una factura con abonos registrados. Elimine primero los abonos.' };
         }
 
-        venta.items.forEach((item) => {
-            const producto = productoPorId(item.productoId);
-            if (!producto || producto.tipo !== 'producto') return;
-            producto.stock = U.round2(U.toNumber(producto.stock) + item.cantidad);
-        });
+        // Las unidades regresan a su costo congelado: el promedio queda exacto.
+        planificarInventario(venta.items.map((item) => ({
+            productoId: item.productoId,
+            cantidad: U.toNumber(item.cantidad),
+            costoUnitario: item.costoUnitario
+        }))).aplicar();
 
         venta.anulada = true;
         venta.motivoAnulacion = String(motivo || '').trim();
@@ -524,6 +618,283 @@ ERP.db = (() => {
         return { ok: true };
     };
 
+    /* ============================================================
+       Edición de documentos
+       Editar no es sobrescribir: se revierte el efecto del documento
+       original (inventario, cartera, cuentas por pagar) y se aplica el
+       nuevo, con las mismas validaciones que al registrarlo.
+       ============================================================ */
+
+    const fallo = (error) => ({ ok: false, error });
+
+    /** Corrige una venta emitida conservando su número, sus abonos y el costo congelado. */
+    const editarVenta = (ventaId, payload) => {
+        const venta = get('ventas', ventaId);
+        if (!venta) return fallo('La factura no existe.');
+        if (venta.anulada) return fallo('No se puede editar una factura anulada.');
+
+        const errorItems = validarItems(payload.items);
+        if (errorItems) return fallo(errorItems);
+        const cliente = terceroPorId(payload.clienteId);
+        if (!cliente) return fallo('Debe seleccionar un cliente válido.');
+        if (!U.isValidISO(payload.fecha)) return fallo('La fecha de la venta no es válida.');
+
+        const abonos = abonosDeVenta(venta.id);
+        const abonado = U.roundCop(U.sum(abonos, (a) => a.valor));
+        const primerAbono = abonos.map((a) => a.fecha).sort()[0];
+        if (primerAbono && payload.fecha > primerAbono) {
+            return fallo(`La factura tiene abonos desde el ${U.fmtDate(primerAbono)}: su fecha no puede ser posterior.`);
+        }
+
+        // Los productos que ya estaban conservan el costo del momento de la venta.
+        const costosCongelados = new Map();
+        venta.items.forEach((item) => {
+            if (!costosCongelados.has(item.productoId)) costosCongelados.set(item.productoId, item.costoUnitario);
+        });
+
+        const items = payload.items.map((item) => {
+            const producto = productoPorId(item.productoId);
+            let costo = 0;
+            if (producto.tipo !== 'servicio') {
+                costo = costosCongelados.has(item.productoId)
+                    ? U.roundCop(costosCongelados.get(item.productoId))
+                    : U.roundCop(producto.costo);
+            }
+            return {
+                productoId: item.productoId,
+                cantidad: U.toNumber(item.cantidad),
+                valorUnitario: U.roundCop(item.valorUnitario),
+                descuentoPct: U.toNumber(item.descuentoPct),
+                costoUnitario: costo
+            };
+        });
+
+        const plan = planificarInventario([
+            ...venta.items.map((item) => ({ productoId: item.productoId, cantidad: U.toNumber(item.cantidad), costoUnitario: item.costoUnitario })),
+            ...items.map((item) => ({ productoId: item.productoId, cantidad: -item.cantidad, costoUnitario: item.costoUnitario }))
+        ], 'venta');
+        if (!plan.ok) return plan;
+
+        const totales = calcularDocumento(items, data.config.ivaPct);
+        const credito = payload.condicion === 'credito';
+
+        if (!credito && abonado > 0) {
+            return fallo(`La factura tiene abonos por ${U.money(abonado)}: no puede pasar a contado. Revierta primero los abonos.`);
+        }
+
+        const nuevoSaldo = credito ? U.roundCop(totales.total - abonado) : 0;
+        if (nuevoSaldo < 0) {
+            return fallo(`El nuevo total (${U.money(totales.total)}) es menor que lo ya abonado (${U.money(abonado)}).`);
+        }
+
+        if (credito) {
+            const disponible = cupoDisponible(cliente.id) + (venta.clienteId === cliente.id ? U.toNumber(venta.saldo) : 0);
+            if (nuevoSaldo > disponible) {
+                return fallo(`El saldo a crédito supera el cupo del cliente. Disponible: ${U.money(disponible)} de ${U.money(cliente.limiteCredito)}.`);
+            }
+        }
+
+        plan.aplicar();
+
+        const clienteCambio = venta.clienteId !== cliente.id;
+        const diasCredito = credito ? (U.toNumber(payload.diasCredito) || 30) : 0;
+
+        Object.assign(venta, {
+            fecha: payload.fecha,
+            clienteId: cliente.id,
+            vendedorId: payload.vendedorId || '',
+            vendedor: payload.vendedor || '',
+            condicion: credito ? 'credito' : 'contado',
+            diasCredito,
+            fechaVencimiento: credito ? U.addDays(payload.fecha, diasCredito) : payload.fecha,
+            items,
+            subtotal: totales.subtotal,
+            iva: totales.iva,
+            total: totales.total,
+            saldo: nuevoSaldo,
+            medioPago: credito ? '' : (payload.medioPago || 'Efectivo'),
+            observaciones: String(payload.observaciones || '').trim(),
+            editadaEn: U.today()
+        });
+
+        if (clienteCambio) abonos.forEach((abono) => { abono.clienteId = cliente.id; });
+
+        const alertas = plan.productos
+            .filter((p) => U.toNumber(p.stock) <= U.toNumber(p.stockMinimo))
+            .map((p) => `"${p.nombre}" quedó en ${U.num(p.stock)} ${p.unidad} (mínimo ${U.num(p.stockMinimo)}).`);
+
+        persist();
+        U.bus.emit('db:changed', { coleccion: 'ventas', motivo: 'edicion' });
+        return { ok: true, venta, alertas };
+    };
+
+    /** Corrige una compra: revierte su entrada al inventario y aplica la nueva. */
+    const editarCompra = (compraId, payload) => {
+        const compra = get('compras', compraId);
+        if (!compra) return fallo('La compra no existe.');
+
+        const errorItems = validarItems(payload.items);
+        if (errorItems) return fallo(errorItems);
+        const proveedor = terceroPorId(payload.proveedorId);
+        if (!proveedor) return fallo('Debe seleccionar un proveedor válido.');
+        if (!U.isValidISO(payload.fecha)) return fallo('La fecha de la compra no es válida.');
+
+        const pagos = pagosDeCompra(compra.id);
+        const pagado = U.roundCop(U.sum(pagos, (p) => p.valor));
+
+        const items = payload.items.map((item) => ({
+            productoId: item.productoId,
+            cantidad: U.toNumber(item.cantidad),
+            valorUnitario: U.roundCop(item.valorUnitario),
+            descuentoPct: U.toNumber(item.descuentoPct)
+        }));
+
+        const plan = planificarInventario([
+            ...compra.items.map((item) => ({ productoId: item.productoId, cantidad: -U.toNumber(item.cantidad), costoUnitario: costoNetoCompra(item) })),
+            ...items.map((item) => ({ productoId: item.productoId, cantidad: item.cantidad, costoUnitario: costoNetoCompra(item) }))
+        ], 'compra');
+        if (!plan.ok) return plan;
+
+        const totales = calcularDocumento(items, data.config.ivaPct);
+        const credito = payload.condicion === 'credito';
+
+        if (!credito && pagado > 0) {
+            return fallo(`La compra tiene pagos por ${U.money(pagado)}: no puede pasar a contado.`);
+        }
+        const nuevoSaldo = credito ? U.roundCop(totales.total - pagado) : 0;
+        if (nuevoSaldo < 0) {
+            return fallo(`El nuevo total (${U.money(totales.total)}) es menor que lo ya pagado (${U.money(pagado)}).`);
+        }
+
+        plan.aplicar();
+
+        const proveedorCambio = compra.proveedorId !== proveedor.id;
+        const diasCredito = credito ? (U.toNumber(payload.diasCredito) || 30) : 0;
+
+        Object.assign(compra, {
+            fecha: payload.fecha,
+            proveedorId: proveedor.id,
+            documentoProveedor: String(payload.documentoProveedor || '').trim(),
+            condicion: credito ? 'credito' : 'contado',
+            diasCredito,
+            fechaVencimiento: credito ? U.addDays(payload.fecha, diasCredito) : payload.fecha,
+            items,
+            subtotal: totales.subtotal,
+            iva: totales.iva,
+            total: totales.total,
+            saldo: nuevoSaldo,
+            medioPago: payload.medioPago || compra.medioPago || 'Transferencia',
+            observaciones: String(payload.observaciones || '').trim(),
+            editadaEn: U.today()
+        });
+
+        if (proveedorCambio) pagos.forEach((pago) => { pago.proveedorId = proveedor.id; });
+
+        persist();
+        U.bus.emit('db:changed', { coleccion: 'compras', motivo: 'edicion' });
+        return { ok: true, compra };
+    };
+
+    /** Corrige un abono recalculando el saldo de su factura. */
+    const editarAbono = (abonoId, payload) => {
+        const abono = get('abonos', abonoId);
+        if (!abono) return fallo('El abono no existe.');
+        const venta = get('ventas', abono.ventaId);
+        if (!venta) return fallo('La factura de este abono ya no existe.');
+        if (venta.anulada) return fallo('La factura está anulada.');
+
+        const valor = U.roundCop(payload.valor);
+        const maximo = U.roundCop(U.toNumber(venta.saldo) + U.toNumber(abono.valor));
+        if (valor <= 0) return fallo('El valor del abono debe ser mayor que cero.');
+        if (valor > maximo) return fallo(`El abono no puede superar ${U.money(maximo)}, el saldo de la factura sin este abono.`);
+        if (!U.isValidISO(payload.fecha)) return fallo('La fecha del abono no es válida.');
+        if (payload.fecha < venta.fecha) return fallo('El abono no puede tener una fecha anterior a la factura.');
+
+        venta.saldo = U.roundCop(maximo - valor);
+        Object.assign(abono, {
+            fecha: payload.fecha,
+            valor,
+            medio: payload.medio || abono.medio,
+            observaciones: String(payload.observaciones || '').trim(),
+            editadoEn: U.today()
+        });
+
+        persist();
+        U.bus.emit('db:changed', { coleccion: 'abonos', motivo: 'edicion' });
+        return { ok: true, abono, venta };
+    };
+
+    /**
+     * Busca un documento ya registrado que corresponda a la misma factura.
+     * El CUFE identifica una factura electrónica sin ambigüedad; el número
+     * del documento más el tercero es una coincidencia probable.
+     */
+    const buscarDuplicado = ({ tipo, cufe, terceroId, referencia }) => {
+        const limpio = (v) => String(v || '').replace(/[^0-9a-z]/gi, '').toLowerCase();
+        const codigo = String(cufe || '').trim().toLowerCase();
+
+        if (codigo) {
+            const fuentes = [['compra', 'compras'], ['venta', 'ventas'], ['gasto', 'gastos']];
+            for (const [clase, coleccion] of fuentes) {
+                const doc = all(coleccion).find((d) => d.cufe === codigo && !d.anulada);
+                if (doc) return { tipo: clase, doc, certeza: 'cufe' };
+            }
+        }
+
+        const ref = limpio(referencia);
+        if (!ref) return null;
+
+        if (tipo === 'compra') {
+            const doc = all('compras').find((c) => (!terceroId || c.proveedorId === terceroId) && limpio(c.documentoProveedor) === ref);
+            return doc ? { tipo, doc, certeza: 'referencia' } : null;
+        }
+        if (tipo === 'venta') {
+            const doc = all('ventas').find((v) => !v.anulada && (!terceroId || v.clienteId === terceroId) && limpio(v.referenciaExterna) === ref);
+            return doc ? { tipo, doc, certeza: 'referencia' } : null;
+        }
+        const doc = all('gastos').find((g) => g.origen !== 'nomina' && limpio(g.referencia) === ref);
+        return doc ? { tipo: 'gasto', doc, certeza: 'referencia' } : null;
+    };
+
+    /**
+     * Devuelve el tercero que corresponde a un documento de identidad o lo
+     * crea con los datos mínimos leídos de una factura. La comparación ignora
+     * puntos, guiones y el dígito de verificación, que no siempre se imprime.
+     */
+    const asegurarTercero = (tipo, datos) => {
+        const documento = String((datos && datos.documento) || '').trim();
+        const nombre = String((datos && datos.nombre) || '').trim();
+        const digitos = documento.replace(/\D/g, '');
+        const soloDigitos = (v) => String(v || '').replace(/\D/g, '');
+
+        if (digitos) {
+            const existente = all('terceros').find((t) => {
+                if (t.tipo !== tipo) return false;
+                const propio = soloDigitos(t.documento);
+                return propio === digitos || propio.slice(0, -1) === digitos || propio === digitos.slice(0, -1);
+            });
+            if (existente) return { ok: true, tercero: existente, creado: false };
+        }
+
+        if (nombre.length < 3) {
+            return fallo('El nombre leído del tercero es demasiado corto. Selecciónelo de la lista o créelo en su módulo.');
+        }
+
+        const tercero = insert('terceros', {
+            tipo,
+            tipoDoc: (datos && datos.tipoDoc) || 'NIT',
+            documento: documento || 'Sin documento',
+            nombre,
+            telefono: '',
+            email: '',
+            direccion: '',
+            limiteCredito: 0,
+            activo: true,
+            origen: 'pdf'
+        });
+        return { ok: true, tercero, creado: true };
+    };
+
     /** Registra un pago a proveedor que amortiza una CxP. */
     const registrarPagoCompra = (payload) => {
         const compra = get('compras', payload.compraId);
@@ -565,7 +936,9 @@ ERP.db = (() => {
             pagado: payload.pagado !== false,
             medio: payload.medio || 'Transferencia',
             origen: payload.origen || 'manual',
-            referencia: payload.referencia || ''
+            referencia: payload.referencia || '',
+            ...(payload.proveedor ? { proveedor: String(payload.proveedor).trim().slice(0, 140) } : {}),
+            ...metadatosArchivo(payload)
         });
         return { ok: true, gasto };
     };
@@ -687,7 +1060,8 @@ ERP.db = (() => {
         const clienteIds = clientes().map((c) => c.id);
         const inventariables = data.productos.filter((p) => p.tipo === 'producto');
         const vendibles = data.productos.filter((p) => p.activo !== false);
-        const vendedores = ['Marcela Gómez', 'Diana Pérez', 'Laura Restrepo'];
+        // Los vendedores salen de la nómina: la venta queda enlazada al empleado.
+        const vendedores = data.empleados.filter((e) => e.id === 'emp_1' || e.id === 'emp_4');
 
         // --- Compra de apertura: constituye el inventario inicial ---
         registrarCompra({
@@ -766,10 +1140,14 @@ ERP.db = (() => {
 
                 if (items.length === 0) continue;
 
+                // Mismo orden de sorteo que antes: las cifras de la demostración no cambian.
+                const clienteId = pick(clienteIds);
+                const vendedorElegido = pick(vendedores);
                 const base = {
                     fecha,
-                    clienteId: pick(clienteIds),
-                    vendedor: pick(vendedores),
+                    clienteId,
+                    vendedorId: vendedorElegido.id,
+                    vendedor: vendedorElegido.nombre,
                     diasCredito: pick([15, 30, 45]),
                     medioPago: pick(MEDIOS_PAGO),
                     items
@@ -934,6 +1312,7 @@ ERP.db = (() => {
         siguienteNumero, calcularDocumento,
         registrarCompra, registrarVenta, anularVenta,
         registrarAbono, eliminarAbono, registrarPagoCompra, registrarGasto,
+        editarVenta, editarCompra, editarAbono, buscarDuplicado, asegurarTercero,
         CATEGORIAS_GASTO, MEDIOS_PAGO,
         get persistente() { return persistenciaActiva; }
     };

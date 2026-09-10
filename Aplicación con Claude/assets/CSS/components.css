@@ -665,6 +665,136 @@ table.data td.wrap { white-space: normal; min-width: 190px; font-weight: 600; }
 .tabs button:hover { color: var(--text); }
 .tabs button[aria-selected="true"] { background: var(--primary); color: #ffffff; }
 
+/* ---------- Tablero: diez indicadores en dos filas ---------- */
+
+.grid-kpi.grid-kpi-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.grid-kpi-5 .kpi { padding: var(--sp-4) 18px; }
+.grid-kpi-5 .kpi::before { left: 18px; }
+.grid-kpi-5 .kpi-value { font-size: clamp(1.05rem, 1.42vw, 1.4rem); }
+
+@media (max-width: 1180px) {
+    .grid-kpi.grid-kpi-5 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+}
+
+@media (max-width: 560px) {
+    .grid-kpi.grid-kpi-5 { grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); }
+}
+
+/* ---------- Acciones del encabezado de vista ---------- */
+
+.view-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+}
+
+/* ---------- Carga de facturas PDF ---------- */
+
+.dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-6) var(--sp-5);
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--r-lg);
+    background: var(--surface-2);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dropzone:hover,
+.dropzone:focus-visible,
+.dropzone.is-over { border-color: var(--primary); background: var(--primary-soft); }
+
+.dropzone-icon {
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+[data-theme="dark"] .dropzone-icon { color: var(--accent-ink); }
+
+.dropzone strong { font-family: var(--font-display); font-size: 1rem; }
+.dropzone p { font-size: 0.8rem; color: var(--text-muted); max-width: 46ch; }
+
+.import-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.import-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.2fr) auto;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+}
+
+.import-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import-meta { font-size: 0.76rem; color: var(--text-muted); font-weight: 500; }
+.import-actions { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 680px) {
+    .import-row { grid-template-columns: 1fr; }
+    .import-actions { justify-content: flex-start; }
+}
+
+.leido-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--warning);
+}
+
+.leido-hint.is-ok { color: var(--text-soft); font-weight: 500; }
+
+.lectura-pdf {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--sp-2) var(--sp-4);
+}
+
+.dato-leido {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+}
+
+.dato-leido span { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); }
+.dato-leido strong { font-size: 0.86rem; font-variant-numeric: tabular-nums; word-break: break-word; }
+
+.texto-extraido summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.texto-extraido pre {
+    max-height: 240px;
+    overflow: auto;
+    margin: var(--sp-2) 0 0;
+    padding: var(--sp-3);
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 /* ---------- Listas de definición (estados financieros) ---------- */
 
 .fin-line {

@@ -25,11 +25,35 @@ ERP.inventario = (() => {
        Formulario
        ============================================================ */
 
-    const abrirFormulario = (producto) => {
+    /** Sugiere un SKU libre a partir del nombre: "Monitor LED 24" → "MON-0001". */
+    const sugerirSku = (nombre) => {
+        const prefijo = (U.normalize(nombre).replace(/[^a-z]/g, '').slice(0, 3) || 'ITM').toUpperCase();
+        const usados = new Set(db.productos().map((p) => p.sku));
+        let n = 1;
+        while (usados.has(`${prefijo}-${String(n).padStart(4, '0')}`)) n += 1;
+        return `${prefijo}-${String(n).padStart(4, '0')}`;
+    };
+
+    /**
+     * opciones.prefill     valores iniciales para un ítem nuevo
+     * opciones.onGuardado  recibe el ítem creado (creación desde una factura)
+     */
+    const abrirFormulario = (producto, opciones = {}) => {
         const editando = Boolean(producto);
+        const desdeDocumento = !editando && typeof opciones.onGuardado === 'function';
+        const prefill = opciones.prefill || {};
         const datos = producto || {
-            sku: '', nombre: '', categoria: '', unidad: 'unidad', tipo: 'producto',
-            stock: 0, stockMinimo: 0, costo: 0, precio: 0, gravado: true, activo: true
+            sku: prefill.nombre ? sugerirSku(prefill.nombre) : '',
+            nombre: prefill.nombre || '',
+            categoria: prefill.categoria || '',
+            unidad: prefill.unidad || 'unidad',
+            tipo: prefill.tipo || 'producto',
+            stock: 0,
+            stockMinimo: 0,
+            costo: U.toNumber(prefill.costo),
+            precio: U.toNumber(prefill.precio),
+            gravado: true,
+            activo: true
         };
 
         const campos = {
@@ -73,7 +97,7 @@ ERP.inventario = (() => {
 
         const alternarTipo = () => {
             const esServicio = campos.tipo.value === 'servicio';
-            filaStockInicial.classList.toggle('is-hidden', esServicio || editando);
+            filaStockInicial.classList.toggle('is-hidden', esServicio || editando || desdeDocumento);
             campos.stockMinimo.disabled = esServicio;
         };
         campos.tipo.addEventListener('change', alternarTipo);
@@ -91,8 +115,10 @@ ERP.inventario = (() => {
                 ui.campo('Existencia mínima', campos.stockMinimo, { ayuda: 'Umbral que dispara la alerta de reposición.' }),
                 ui.campo('Precio de costo', campos.costo),
                 ui.campo('Precio de venta', campos.precio),
-                editando ? null : filaStockInicial
+                (editando || desdeDocumento) ? null : filaStockInicial
             ]),
+            desdeDocumento ? ui.banner('Existencias',
+                'El ítem se crea sin existencias: las unidades entran con el documento que está registrando.', 'info') : null,
             lecturaMargen,
             el('div', { class: 'row row-wrap' }, [
                 el('label', { class: 'check' }, [campos.gravado, el('span', { text: 'Grava IVA' })]),
@@ -154,6 +180,7 @@ ERP.inventario = (() => {
                 activo: campos.activo.checked
             };
 
+            let creado = null;
             if (editando) {
                 db.update('productos', producto.id, payload);
                 ui.toastOk('Ítem actualizado', nombre);
@@ -161,7 +188,7 @@ ERP.inventario = (() => {
                 const nuevo = db.insert('productos', { ...payload, stock: 0 });
                 const inicial = U.toNumber(campos.stockInicial.value);
 
-                if (inicial > 0 && payload.tipo === 'producto') {
+                if (!desdeDocumento && inicial > 0 && payload.tipo === 'producto') {
                     const proveedor = db.proveedores()[0];
                     if (!proveedor) {
                         ui.toastWarn('Ítem creado sin existencias',
@@ -180,8 +207,12 @@ ERP.inventario = (() => {
                     }
                 }
                 ui.toastOk('Ítem creado', `${sku} — ${nombre}`);
+                // Se notifica después de cerrar, para devolver el foco al documento de origen.
+                creado = nuevo;
             }
             ctrl.cerrar();
+            // Se notifica después de cerrar: el foco ya volvió al documento de origen.
+            if (desdeDocumento && creado) opciones.onGuardado(creado);
         };
 
         formulario.addEventListener('submit', enviar);
@@ -262,6 +293,51 @@ ERP.inventario = (() => {
     };
 
     /* ============================================================
+       Exportación a Excel
+       ============================================================ */
+
+    const exportar = (lista) => {
+        if (!lista.length) {
+            ui.toastWarn('Nada que exportar', 'La tabla no tiene registros con los filtros actuales.');
+            return;
+        }
+        try {
+            ERP.excel.descargar({
+                archivo: ERP.excel.nombreArchivo('inventario'),
+                titulo: 'Inventario',
+                hojas: [{
+                    nombre: 'Inventario',
+                    totales: true,
+                    columnas: [
+                        { titulo: 'SKU' }, { titulo: 'Ítem' }, { titulo: 'Categoría' }, { titulo: 'Tipo' },
+                        { titulo: 'Unidad' }, { titulo: 'Existencia', tipo: 'numero' }, { titulo: 'Mínimo', tipo: 'numero' },
+                        { titulo: 'Estado' }, { titulo: 'Costo promedio', tipo: 'moneda' }, { titulo: 'Precio de venta', tipo: 'moneda' },
+                        { titulo: 'Margen', tipo: 'porcentaje' }, { titulo: 'Valor al costo', tipo: 'moneda' },
+                        { titulo: 'Valor a precio de venta', tipo: 'moneda' }, { titulo: 'Activo' }
+                    ],
+                    filas: lista.map((p) => {
+                        const inventariable = p.tipo === 'producto';
+                        const estado = !inventariable ? 'Servicio'
+                            : (U.toNumber(p.stock) <= U.toNumber(p.stockMinimo) ? 'Reponer' : 'En nivel');
+                        return [
+                            p.sku, p.nombre, p.categoria, inventariable ? 'Producto' : 'Servicio', p.unidad,
+                            inventariable ? U.toNumber(p.stock) : null, inventariable ? U.toNumber(p.stockMinimo) : null,
+                            estado, U.toNumber(p.costo), U.toNumber(p.precio), margenPct(p) / 100,
+                            inventariable ? U.toNumber(p.stock) * U.toNumber(p.costo) : 0,
+                            inventariable ? U.toNumber(p.stock) * U.toNumber(p.precio) : 0,
+                            p.activo === false ? 'No' : 'Sí'
+                        ];
+                    })
+                }]
+            });
+            ui.toastOk('Excel generado', `${lista.length} ítems exportados.`);
+        } catch (error) {
+            console.error(error);
+            ui.toastError('No se pudo generar el Excel', 'Revise la consola para más detalle.');
+        }
+    };
+
+    /* ============================================================
        Vista
        ============================================================ */
 
@@ -275,6 +351,7 @@ ERP.inventario = (() => {
 
         const filtros = { categoria: '', soloAlerta: false };
         const zonaTabla = el('div');
+        let tablaActual = null;
 
         const pintarTabla = () => {
             U.clear(zonaTabla);
@@ -340,6 +417,7 @@ ERP.inventario = (() => {
             });
 
             zonaTabla.appendChild(ui.card(null, tabla.nodo, { sinRelleno: true }));
+            tablaActual = tabla;
         };
 
         const selectCategoria = ui.select(categorias(), {
@@ -358,10 +436,16 @@ ERP.inventario = (() => {
                     el('h1', { text: 'Inventario' }),
                     el('p', { text: 'Catálogo de productos y servicios. Las existencias se mueven automáticamente con las compras y las ventas.' })
                 ]),
-                el('button', {
-                    class: 'btn', text: '+ Nuevo ítem', attrs: { type: 'button' },
-                    on: { click: () => abrirFormulario() }
-                })
+                el('div', { class: 'view-actions' }, [
+                    el('button', {
+                        class: 'btn btn-secondary', text: '⤓ Descargar Excel', attrs: { type: 'button' },
+                        on: { click: () => exportar(tablaActual ? tablaActual.filas() : []) }
+                    }),
+                    el('button', {
+                        class: 'btn', text: '+ Nuevo ítem', attrs: { type: 'button' },
+                        on: { click: () => abrirFormulario() }
+                    })
+                ])
             ]),
 
             el('div', { class: 'grid-kpi' }, [
@@ -394,5 +478,5 @@ ERP.inventario = (() => {
         pintarTabla();
     };
 
-    return { vista, abrirFormulario, abrirKardex, margenPct, categorias };
+    return { vista, abrirFormulario, abrirKardex, margenPct, categorias, exportar };
 })();

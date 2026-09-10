@@ -2,6 +2,8 @@
    purchases.js — Compras (entrada de inventario) y gastos
    Una compra incrementa existencias y recalcula el costo promedio
    ponderado; a crédito abre la cuenta por pagar del proveedor.
+   Ambos documentos se pueden registrar a mano, cargar desde una
+   factura en PDF, editar y exportar a Excel.
    ============================================================ */
 
 window.ERP = window.ERP || {};
@@ -12,34 +14,76 @@ ERP.compras = (() => {
     const ui = ERP.ui;
     const db = ERP.db;
 
+    const NUEVO_TERCERO = '__nuevo_tercero__';
+
+    /** Los manejadores de clic pasan el evento como primer argumento: se descarta. */
+    const opcionesDe = (valor) => (valor && typeof valor === 'object' && !(valor instanceof Event) ? valor : {});
+
+    const estadoCompra = (compra) => {
+        if (U.toNumber(compra.saldo) <= 0) return { texto: 'Pagada', tono: 'success' };
+        if (compra.fechaVencimiento < U.today()) return { texto: 'Vencida', tono: 'danger' };
+        return { texto: 'Pendiente', tono: 'warning' };
+    };
+
+    const plazosCon = (valor) => {
+        const plazos = [15, 30, 45, 60, 90];
+        const n = U.toNumber(valor);
+        if (n > 0 && !plazos.includes(n)) plazos.push(n);
+        return plazos.sort((a, b) => a - b);
+    };
+
     /* ============================================================
-       Registro de compra
+       Registro, edición e importación de compras
+       opciones.compra   documento a editar
+       opciones.prefill  datos leídos de un PDF (ver importer.js)
        ============================================================ */
 
-    const abrirFormulario = () => {
-        const proveedores = db.proveedores().filter((p) => p.activo !== false);
+    const abrirFormulario = (entrada) => {
+        const opciones = opcionesDe(entrada);
+        const compra = opciones.compra || null;
+        const prefill = compra ? null : (opciones.prefill || null);
+        const editando = Boolean(compra);
+        const importacion = prefill && prefill.importacion ? prefill.importacion : null;
+        const proveedorNuevo = prefill && prefill.proveedorNuevo ? prefill.proveedorNuevo : null;
 
-        if (proveedores.length === 0) {
+        const proveedores = db.proveedores().filter((p) => p.activo !== false || (compra && p.id === compra.proveedorId));
+        if (proveedores.length === 0 && !proveedorNuevo) {
             ui.toastError('No hay proveedores', 'Registre al menos un proveedor antes de comprar.');
             return;
         }
 
-        const editor = ERP.lineas.editor('compra');
+        const base = compra || prefill || {};
+        const editor = ERP.lineas.editor('compra', {
+            items: compra ? compra.items : (prefill ? prefill.items : null),
+            permitirCrear: true
+        });
+
+        const opcionesProveedor = proveedores.map((p) => ({ valor: p.id, texto: p.nombre }));
+        if (proveedorNuevo) {
+            opcionesProveedor.unshift({
+                valor: NUEVO_TERCERO,
+                texto: `+ Crear proveedor «${proveedorNuevo.nombre || 'sin nombre'}»${proveedorNuevo.documento ? ` — ${proveedorNuevo.tipoDoc || 'NIT'} ${proveedorNuevo.documento}` : ''}`
+            });
+        }
 
         const campos = {
-            fecha: ui.input({ tipo: 'date', valor: U.today() }),
-            proveedor: ui.select(
-                proveedores.map((p) => ({ valor: p.id, texto: p.nombre })),
-                { placeholder: 'Seleccione el proveedor…' }
-            ),
-            documento: ui.input({ placeholder: 'Número de factura del proveedor' }),
+            fecha: ui.input({ tipo: 'date', valor: base.fecha || U.today() }),
+            proveedor: ui.select(opcionesProveedor, {
+                placeholder: 'Seleccione el proveedor…',
+                valor: base.proveedorId || (proveedorNuevo ? NUEVO_TERCERO : '')
+            }),
+            documento: ui.input({ valor: base.documentoProveedor || '', placeholder: 'Número de factura del proveedor' }),
             condicion: ui.select([
                 { valor: 'contado', texto: 'Contado' },
                 { valor: 'credito', texto: 'Crédito' }
-            ], { valor: 'contado' }),
-            dias: ui.select([15, 30, 45, 60, 90], { valor: 30 }),
-            medio: ui.select(db.MEDIOS_PAGO, { valor: 'Transferencia' }),
-            observaciones: el('textarea', { class: 'textarea', attrs: { rows: 2, placeholder: 'Observaciones (opcional)' } })
+            ], { valor: base.condicion || 'contado' }),
+            dias: ui.select(plazosCon(base.diasCredito), { valor: base.diasCredito || 30 }),
+            medio: ui.select(db.MEDIOS_PAGO, { valor: base.medioPago || 'Transferencia' }),
+            observaciones: el('textarea', {
+                class: 'textarea',
+                attrs: { rows: 2, placeholder: 'Observaciones (opcional)' },
+                props: { value: base.observaciones || '' }
+            })
         };
 
         const campoDias = ui.campo('Plazo (días)', campos.dias);
@@ -52,10 +96,31 @@ ERP.compras = (() => {
         };
         campos.condicion.addEventListener('change', alternarCondicion);
 
+        let explicacion;
+        if (editando) {
+            const pagos = db.pagosDeCompra(compra.id);
+            explicacion = ui.banner('Corrección de un documento registrado',
+                pagos.length
+                    ? `La compra tiene ${pagos.length} ${pagos.length === 1 ? 'pago' : 'pagos'} por ${U.money(U.sum(pagos, (p) => p.valor))}. Al guardar se revierte la entrada original al inventario, se aplica la nueva y el saldo se recalcula sobre el nuevo total.`
+                    : 'Al guardar se revierte la entrada original al inventario y se aplica la nueva, con el costo promedio recalculado.',
+                'info');
+        } else {
+            explicacion = ui.banner('Efecto en el inventario',
+                'Al guardar, las existencias suben y el costo promedio ponderado de cada ítem se recalcula automáticamente.',
+                'info');
+        }
+
+        const panel = importacion ? ERP.importador.panelLectura(importacion, () => editor.totales) : null;
+        if (panel) {
+            editor.onCambio = () => panel.actualizar();
+            panel.actualizar();
+        }
+
         const errores = el('div');
 
         const formulario = el('form', { class: 'stack' }, [
             errores,
+            panel ? panel.nodo : null,
             el('div', { class: 'grid-form' }, [
                 ui.campo('Fecha', campos.fecha),
                 ui.campo('Proveedor', campos.proveedor),
@@ -64,19 +129,20 @@ ERP.compras = (() => {
                 campoDias,
                 campoMedio
             ]),
-            ui.banner('Efecto en el inventario',
-                'Al guardar, las existencias suben y el costo promedio ponderado de cada ítem se recalcula automáticamente.',
-                'info'),
+            explicacion,
             editor.nodo,
             ui.campo('Observaciones', campos.observaciones)
         ]);
 
-        const btnGuardar = el('button', { class: 'btn', text: 'Registrar compra', attrs: { type: 'button' } });
+        const textoGuardar = editando ? 'Guardar cambios' : 'Registrar compra';
+        const btnGuardar = el('button', { class: 'btn', text: textoGuardar, attrs: { type: 'button' } });
         const btnCancelar = el('button', { class: 'btn btn-secondary', text: 'Cancelar', attrs: { type: 'button' } });
 
         const ctrl = ui.modal({
-            titulo: 'Nueva compra',
-            subtitulo: `Consecutivo ${db.siguienteNumero('compra')}`,
+            titulo: editando ? `Editar compra ${compra.numero}` : (importacion ? 'Registrar factura de compra' : 'Nueva compra'),
+            subtitulo: editando
+                ? `${db.nombreTercero(compra.proveedorId)} · ${U.fmtDate(compra.fecha)}`
+                : `Consecutivo ${db.siguienteNumero('compra')}`,
             ancho: 'ancho',
             contenido: formulario,
             acciones: [btnCancelar, btnGuardar]
@@ -85,43 +151,123 @@ ERP.compras = (() => {
         alternarCondicion();
         btnCancelar.addEventListener('click', () => ctrl.cerrar());
 
+        // Las advertencias (posible duplicado, total distinto al del PDF) piden
+        // un segundo clic; cualquier cambio en el formulario las vuelve a evaluar.
+        let advertenciasAceptadas = false;
+        formulario.addEventListener('input', () => {
+            if (!advertenciasAceptadas) return;
+            advertenciasAceptadas = false;
+            btnGuardar.textContent = textoGuardar;
+        });
+
+        const mostrarError = (titulo, mensaje) => {
+            U.clear(errores);
+            errores.appendChild(ui.banner(titulo, mensaje, 'danger'));
+            errores.scrollIntoView({ block: 'nearest' });
+        };
+
         const enviar = (event) => {
             if (event) event.preventDefault();
             U.clear(errores);
 
             const items = editor.obtener();
+            if (editor.lineasSinProducto() > 0) {
+                mostrarError('Líneas sin producto', 'Asigne un producto a todas las líneas leídas del PDF o quítelas.');
+                return;
+            }
             if (items.length === 0) {
-                errores.appendChild(ui.banner('Documento vacío', 'Agregue al menos un ítem a la compra.', 'danger'));
+                mostrarError('Documento vacío', 'Agregue al menos un ítem a la compra.');
                 return;
             }
             if (!campos.proveedor.value) {
-                errores.appendChild(ui.banner('Falta el proveedor', 'Seleccione a quién se le compró.', 'danger'));
+                mostrarError('Falta el proveedor', 'Seleccione a quién se le compró.');
                 return;
             }
             if (campos.fecha.value > U.today()) {
-                errores.appendChild(ui.banner('Fecha futura', 'La compra no puede tener una fecha posterior a hoy.', 'danger'));
+                mostrarError('Fecha futura', 'La compra no puede tener una fecha posterior a hoy.');
                 return;
             }
 
-            const res = db.registrarCompra({
+            const documento = campos.documento.value.trim();
+            const cufe = importacion && importacion.datos ? importacion.datos.cufe : '';
+
+            if (!editando) {
+                const terceroId = campos.proveedor.value === NUEVO_TERCERO ? null : campos.proveedor.value;
+                const duplicado = db.buscarDuplicado({ tipo: 'compra', cufe, terceroId, referencia: documento });
+                if (duplicado && duplicado.certeza === 'cufe') {
+                    mostrarError('Factura ya registrada',
+                        `El código CUFE de este PDF ya está en ${duplicado.doc.numero || duplicado.doc.descripcion}. No se registra dos veces.`);
+                    return;
+                }
+
+                if (!advertenciasAceptadas) {
+                    const avisos = [];
+                    if (duplicado) {
+                        avisos.push(`Ya existe la compra ${duplicado.doc.numero} de este proveedor con el documento ${documento}.`);
+                    }
+                    const totalLeido = importacion && importacion.datos ? U.toNumber(importacion.datos.total) : 0;
+                    if (totalLeido > 0) {
+                        const diferencia = editor.totales.total - totalLeido;
+                        if (Math.abs(diferencia) > Math.max(1000, totalLeido * 0.01)) {
+                            avisos.push(`El total calculado (${U.money(editor.totales.total)}) no coincide con el de la factura (${U.money(totalLeido)}).`);
+                        }
+                    }
+                    if (avisos.length) {
+                        errores.appendChild(ui.banner('Revise antes de registrar', avisos.join(' '), 'warning'));
+                        advertenciasAceptadas = true;
+                        btnGuardar.textContent = 'Registrar de todos modos';
+                        return;
+                    }
+                }
+            }
+
+            let proveedorId = campos.proveedor.value;
+            if (proveedorId === NUEVO_TERCERO) {
+                const res = db.asegurarTercero('proveedor', proveedorNuevo);
+                if (!res.ok) {
+                    mostrarError('No se pudo crear el proveedor', res.error);
+                    return;
+                }
+                proveedorId = res.tercero.id;
+                // Si el registro falla más adelante, un reintento no vuelve a crearlo.
+                const opcion = campos.proveedor.querySelector(`option[value="${NUEVO_TERCERO}"]`);
+                if (opcion) {
+                    opcion.value = proveedorId;
+                    opcion.textContent = res.tercero.nombre;
+                }
+                campos.proveedor.value = proveedorId;
+                if (res.creado) ui.toastInfo('Proveedor creado', `${res.tercero.nombre}. Complete sus datos en el módulo de proveedores.`);
+            }
+
+            const payload = {
                 fecha: campos.fecha.value,
-                proveedorId: campos.proveedor.value,
-                documentoProveedor: campos.documento.value,
+                proveedorId,
+                documentoProveedor: documento,
                 condicion: campos.condicion.value,
                 diasCredito: U.toNumber(campos.dias.value),
                 medioPago: campos.medio.value,
                 observaciones: campos.observaciones.value,
                 items
-            });
+            };
+
+            const res = editando
+                ? db.editarCompra(compra.id, payload)
+                : db.registrarCompra({
+                    ...payload,
+                    origen: importacion ? 'pdf' : 'manual',
+                    archivoOrigen: importacion ? importacion.archivo : '',
+                    cufe
+                });
 
             if (!res.ok) {
-                errores.appendChild(ui.banner('No se pudo registrar', res.error, 'danger'));
+                mostrarError(editando ? 'No se pudo guardar' : 'No se pudo registrar', res.error);
                 return;
             }
 
-            ui.toastOk(`Compra ${res.compra.numero} registrada`,
+            ui.toastOk(editando ? `Compra ${res.compra.numero} actualizada` : `Compra ${res.compra.numero} registrada`,
                 `${U.money(res.compra.total)} — existencias actualizadas.`);
             ctrl.cerrar();
+            if (prefill && typeof prefill.onRegistrado === 'function') prefill.onRegistrado(res.compra);
         };
 
         formulario.addEventListener('submit', enviar);
@@ -205,18 +351,23 @@ ERP.compras = (() => {
             return el('tr', {}, [
                 el('td', { text: producto ? producto.sku : '—' }),
                 el('td', { class: 'wrap', text: producto ? producto.nombre : 'Ítem eliminado' }),
-                el('td', { class: 'num', text: U.num(item.cantidad) }),
+                el('td', { class: 'num', text: U.num(item.cantidad, 2) }),
                 el('td', { class: 'num', text: U.money(item.valorUnitario) }),
                 el('td', { class: 'num', text: item.descuentoPct ? U.pct(item.descuentoPct, 0) : '—' }),
                 el('td', { class: 'num strong', text: U.money(neto) })
             ]);
         });
 
-        ui.modal({
+        const btnEditar = el('button', { class: 'btn btn-secondary', text: 'Editar compra', attrs: { type: 'button' } });
+
+        const ctrl = ui.modal({
             titulo: `Compra ${compra.numero}`,
             subtitulo: `${db.nombreTercero(compra.proveedorId)} · ${U.fmtDate(compra.fecha)}`,
             ancho: 'ancho',
             contenido: el('div', { class: 'stack' }, [
+                compra.origen === 'pdf'
+                    ? ui.banner('Registrada desde PDF', `${compra.archivoOrigen || 'Archivo sin nombre'}${compra.cufe ? ` · CUFE ${U.truncate(compra.cufe, 24)}` : ''}`, 'info')
+                    : null,
                 el('div', { class: 'grid-kpi' }, [
                     ui.kpi('Total', U.money(compra.total), compra.condicion === 'credito' ? `Crédito ${compra.diasCredito} días` : 'Contado', 'var(--c1)'),
                     ui.kpi('Pagado', U.money(U.sum(pagos, (p) => p.valor)), `${pagos.length} pagos`, 'var(--c2)'),
@@ -254,8 +405,96 @@ ERP.compras = (() => {
                         ])))
                     ])
                 ]), { sinRelleno: true }) : null
-            ])
+            ]),
+            acciones: [btnEditar]
         });
+
+        btnEditar.addEventListener('click', () => {
+            ctrl.cerrar();
+            abrirFormulario({ compra });
+        });
+    };
+
+    /* ============================================================
+       Exportación a Excel
+       ============================================================ */
+
+    const exportar = (lista) => {
+        if (!lista.length) {
+            ui.toastWarn('Nada que exportar', 'La tabla no tiene registros con la búsqueda actual.');
+            return;
+        }
+        try {
+            const ids = new Set(lista.map((c) => c.id));
+            const pagos = db.all('pagosCompra').filter((p) => ids.has(p.compraId));
+
+            ERP.excel.descargar({
+                archivo: ERP.excel.nombreArchivo('compras'),
+                titulo: 'Compras',
+                hojas: [
+                    {
+                        nombre: 'Compras',
+                        totales: true,
+                        columnas: [
+                            { titulo: 'Número' }, { titulo: 'Doc. proveedor' }, { titulo: 'Fecha', tipo: 'fecha' },
+                            { titulo: 'Proveedor' }, { titulo: 'NIT' }, { titulo: 'Condición' },
+                            { titulo: 'Plazo (días)', tipo: 'entero' }, { titulo: 'Vence', tipo: 'fecha' },
+                            { titulo: 'Ítems', tipo: 'entero' }, { titulo: 'Subtotal', tipo: 'moneda' },
+                            { titulo: 'IVA', tipo: 'moneda' }, { titulo: 'Total', tipo: 'moneda' },
+                            { titulo: 'Pagado', tipo: 'moneda' }, { titulo: 'Saldo', tipo: 'moneda' },
+                            { titulo: 'Estado' }, { titulo: 'Origen' }
+                        ],
+                        filas: lista.map((c) => {
+                            const proveedor = db.terceroPorId(c.proveedorId);
+                            const pagado = U.sum(pagos.filter((p) => p.compraId === c.id), (p) => p.valor);
+                            return [
+                                c.numero, c.documentoProveedor, c.fecha, proveedor ? proveedor.nombre : '',
+                                proveedor ? proveedor.documento : '', c.condicion === 'credito' ? 'Crédito' : 'Contado',
+                                c.diasCredito, c.fechaVencimiento, c.items.length, c.subtotal, c.iva, c.total,
+                                pagado, c.saldo, estadoCompra(c).texto,
+                                c.origen === 'pdf' ? `PDF: ${c.archivoOrigen || ''}` : 'Manual'
+                            ];
+                        })
+                    },
+                    {
+                        nombre: 'Detalle de ítems',
+                        totales: true,
+                        columnas: [
+                            { titulo: 'Compra' }, { titulo: 'Fecha', tipo: 'fecha' }, { titulo: 'Proveedor' },
+                            { titulo: 'SKU' }, { titulo: 'Ítem' }, { titulo: 'Cantidad', tipo: 'numero' },
+                            { titulo: 'Costo unitario', tipo: 'moneda' }, { titulo: 'Descuento', tipo: 'porcentaje' },
+                            { titulo: 'Neto', tipo: 'moneda' }
+                        ],
+                        filas: lista.flatMap((c) => c.items.map((item) => {
+                            const producto = db.productoPorId(item.productoId);
+                            const bruto = U.toNumber(item.cantidad) * U.toNumber(item.valorUnitario);
+                            return [
+                                c.numero, c.fecha, db.nombreTercero(c.proveedorId),
+                                producto ? producto.sku : '', producto ? producto.nombre : 'Ítem eliminado',
+                                U.toNumber(item.cantidad), U.toNumber(item.valorUnitario),
+                                U.toNumber(item.descuentoPct) / 100, bruto * (1 - U.toNumber(item.descuentoPct) / 100)
+                            ];
+                        }))
+                    },
+                    {
+                        nombre: 'Pagos',
+                        totales: true,
+                        columnas: [
+                            { titulo: 'Fecha', tipo: 'fecha' }, { titulo: 'Compra' }, { titulo: 'Proveedor' },
+                            { titulo: 'Medio' }, { titulo: 'Valor', tipo: 'moneda' }
+                        ],
+                        filas: U.sortBy(pagos, 'fecha').map((p) => {
+                            const c = db.get('compras', p.compraId);
+                            return [p.fecha, c ? c.numero : '', db.nombreTercero(p.proveedorId), p.medio, p.valor];
+                        })
+                    }
+                ]
+            });
+            ui.toastOk('Excel generado', `${lista.length} compras exportadas.`);
+        } catch (error) {
+            console.error(error);
+            ui.toastError('No se pudo generar el Excel', 'Revise la consola para más detalle.');
+        }
     };
 
     /* ============================================================
@@ -270,7 +509,14 @@ ERP.compras = (() => {
         const vencidas = porPagar.filter((c) => c.fechaVencimiento < U.today());
 
         const tabla = ui.tabla(compras, [
-            { clave: 'numero', titulo: 'Número' },
+            {
+                clave: 'numero', titulo: 'Número', tipo: 'nodo', ordenable: true,
+                valor: (c) => `${c.numero}${c.origen === 'pdf' ? ' pdf' : ''}`,
+                render: (c) => el('div', { class: 'row' }, [
+                    el('span', { class: 'strong', text: c.numero }),
+                    c.origen === 'pdf' ? ui.badge('PDF', 'info') : null
+                ])
+            },
             { clave: 'fecha', titulo: 'Fecha', tipo: 'fecha' },
             { clave: 'proveedor', titulo: 'Proveedor', ajustar: true, valor: (c) => db.nombreTercero(c.proveedorId) },
             { clave: 'documentoProveedor', titulo: 'Doc. proveedor' },
@@ -280,10 +526,10 @@ ERP.compras = (() => {
             { clave: 'saldo', titulo: 'Saldo', tipo: 'moneda' },
             {
                 clave: 'estado', titulo: 'Estado', tipo: 'nodo',
+                valor: (c) => estadoCompra(c).texto,
                 render: (c) => {
-                    if (U.toNumber(c.saldo) <= 0) return ui.badge('Pagada', 'success');
-                    if (c.fechaVencimiento < U.today()) return ui.badge('Vencida', 'danger');
-                    return ui.badge('Pendiente', 'warning');
+                    const estado = estadoCompra(c);
+                    return ui.badge(estado.texto, estado.tono);
                 }
             },
             {
@@ -292,6 +538,10 @@ ERP.compras = (() => {
                     el('button', {
                         class: 'btn btn-secondary btn-sm', text: 'Detalle', attrs: { type: 'button' },
                         on: { click: () => verDetalle(c) }
+                    }),
+                    el('button', {
+                        class: 'btn btn-ghost btn-sm', text: 'Editar', attrs: { type: 'button' },
+                        on: { click: () => abrirFormulario({ compra: c }) }
                     }),
                     U.toNumber(c.saldo) > 0 ? el('button', {
                         class: 'btn btn-ghost btn-sm', text: 'Pagar', attrs: { type: 'button' },
@@ -317,10 +567,20 @@ ERP.compras = (() => {
                     el('h1', { text: 'Compras' }),
                     el('p', { text: 'Entradas de inventario. Cada compra actualiza las existencias y el costo promedio ponderado.' })
                 ]),
-                el('button', {
-                    class: 'btn', text: '+ Nueva compra', attrs: { type: 'button' },
-                    on: { click: abrirFormulario }
-                })
+                el('div', { class: 'view-actions' }, [
+                    el('button', {
+                        class: 'btn btn-secondary', text: '⤓ Descargar Excel', attrs: { type: 'button' },
+                        on: { click: () => exportar(tabla.filas()) }
+                    }),
+                    el('button', {
+                        class: 'btn btn-secondary', text: 'Cargar factura PDF', attrs: { type: 'button' },
+                        on: { click: () => ERP.importador.abrir('compra') }
+                    }),
+                    el('button', {
+                        class: 'btn', text: '+ Nueva compra', attrs: { type: 'button' },
+                        on: { click: () => abrirFormulario() }
+                    })
+                ])
             ]),
             el('div', { class: 'grid-kpi' }, [
                 ui.kpi('Compras del mes', U.money(U.sum(delMes, (c) => c.total)),
@@ -336,7 +596,7 @@ ERP.compras = (() => {
         ]);
     };
 
-    return { vista, abrirFormulario, abrirPago, verDetalle };
+    return { vista, abrirFormulario, abrirPago, verDetalle, exportar };
 })();
 
 /* ============================================================
@@ -349,51 +609,87 @@ ERP.gastos = (() => {
     const ui = ERP.ui;
     const db = ERP.db;
 
-    const abrirFormulario = (gasto) => {
-        const editando = Boolean(gasto);
-        const datos = gasto || {
-            fecha: U.today(), categoria: '', descripcion: '', valor: 0, pagado: true, medio: 'Transferencia'
+    /**
+     * gasto    registro a editar (o null)
+     * prefill  datos leídos de un PDF (ver importer.js)
+     */
+    const abrirFormulario = (gasto, prefill) => {
+        const editando = Boolean(gasto) && !(gasto instanceof Event);
+        const lectura = !editando && prefill ? prefill : null;
+        const importacion = lectura && lectura.importacion ? lectura.importacion : null;
+        const datos = editando ? gasto : {
+            fecha: U.today(), categoria: '', descripcion: '', valor: 0, pagado: true,
+            medio: 'Transferencia', referencia: '', proveedor: '', ...(lectura || {})
         };
 
         const campos = {
             fecha: ui.input({ tipo: 'date', valor: datos.fecha }),
             categoria: ui.select(db.CATEGORIAS_GASTO, { placeholder: 'Seleccione la categoría…', valor: datos.categoria }),
             descripcion: ui.input({ valor: datos.descripcion, placeholder: 'Concepto del gasto' }),
-            valor: ui.input({ tipo: 'number', valor: datos.valor, numerico: true, min: 0, step: 1000 }),
-            medio: ui.select(db.MEDIOS_PAGO, { valor: datos.medio }),
+            proveedor: ui.input({ valor: datos.proveedor || '', placeholder: 'A quién se le pagó (opcional)' }),
+            referencia: ui.input({ valor: datos.referencia || '', placeholder: 'N.º de factura o comprobante (opcional)' }),
+            valor: ui.input({ tipo: 'number', valor: datos.valor, numerico: true, min: 0, step: 'any' }),
+            medio: ui.select(db.MEDIOS_PAGO, { valor: datos.medio || 'Transferencia' }),
             pagado: el('input', { attrs: { type: 'checkbox' }, props: { checked: datos.pagado !== false } })
         };
+
+        // La nómina guarda en "referencia" el vínculo con su liquidación: no se edita a mano.
+        const esNomina = editando && gasto.origen === 'nomina';
+        if (esNomina) campos.referencia.readOnly = true;
+
+        const panel = importacion
+            ? ERP.importador.panelLectura(importacion, () => ({ total: U.toNumber(campos.valor.value) }))
+            : null;
+        if (panel) {
+            campos.valor.addEventListener('input', () => panel.actualizar());
+            panel.actualizar();
+        }
 
         const errores = el('div');
 
         const formulario = el('form', { class: 'stack' }, [
             errores,
+            panel ? panel.nodo : null,
             el('div', { class: 'grid-form' }, [
                 ui.campo('Fecha', campos.fecha),
                 ui.campo('Categoría', campos.categoria),
                 ui.campo('Descripción', campos.descripcion, { clase: 'span-full' }),
-                ui.campo('Valor', campos.valor),
+                ui.campo('Proveedor', campos.proveedor),
+                ui.campo('Referencia', campos.referencia),
+                ui.campo('Valor total', campos.valor, { ayuda: importacion ? 'Total de la factura, IVA incluido.' : '' }),
                 ui.campo('Medio de pago', campos.medio)
             ]),
             el('label', { class: 'check' }, [
                 campos.pagado,
                 el('span', { text: 'Ya fue pagado (afecta el flujo de caja)' })
             ]),
+            esNomina ? ui.banner('Gasto de nómina',
+                'Proviene de una liquidación. Si cambia el valor aquí, no se corrige la liquidación: lo recomendable es eliminarla y liquidar de nuevo en Nómina.',
+                'warning') : null,
             ui.banner('Cómo se contabiliza',
                 'El gasto siempre afecta el estado de resultados en su fecha. Solo afecta el flujo de caja si está marcado como pagado.',
                 'info')
         ]);
 
-        const btnGuardar = el('button', { class: 'btn', text: editando ? 'Guardar cambios' : 'Registrar gasto', attrs: { type: 'button' } });
+        const textoGuardar = editando ? 'Guardar cambios' : 'Registrar gasto';
+        const btnGuardar = el('button', { class: 'btn', text: textoGuardar, attrs: { type: 'button' } });
         const btnCancelar = el('button', { class: 'btn btn-secondary', text: 'Cancelar', attrs: { type: 'button' } });
 
         const ctrl = ui.modal({
-            titulo: editando ? 'Editar gasto' : 'Nuevo gasto',
+            titulo: editando ? 'Editar gasto' : (importacion ? 'Registrar factura como gasto' : 'Nuevo gasto'),
+            ancho: importacion ? 'ancho' : undefined,
             contenido: formulario,
             acciones: [btnCancelar, btnGuardar]
         });
 
         btnCancelar.addEventListener('click', () => ctrl.cerrar());
+
+        let advertenciasAceptadas = false;
+        formulario.addEventListener('input', () => {
+            if (!advertenciasAceptadas) return;
+            advertenciasAceptadas = false;
+            btnGuardar.textContent = textoGuardar;
+        });
 
         const enviar = (event) => {
             if (event) event.preventDefault();
@@ -403,6 +699,8 @@ ERP.gastos = (() => {
                 fecha: campos.fecha.value,
                 categoria: campos.categoria.value,
                 descripcion: campos.descripcion.value,
+                proveedor: campos.proveedor.value.trim(),
+                referencia: campos.referencia.value.trim(),
                 valor: campos.valor.value,
                 pagado: campos.pagado.checked,
                 medio: campos.medio.value
@@ -414,21 +712,59 @@ ERP.gastos = (() => {
                         'Seleccione una categoría y escriba un valor mayor que cero.', 'danger'));
                     return;
                 }
-                db.update('gastos', gasto.id, {
+                if (!U.isValidISO(payload.fecha)) {
+                    errores.appendChild(ui.banner('Fecha inválida', 'Revise la fecha del gasto.', 'danger'));
+                    return;
+                }
+                const cambios = {
                     ...payload,
                     valor: U.roundCop(payload.valor),
                     descripcion: payload.descripcion.trim() || payload.categoria
-                });
-                ui.toastOk('Gasto actualizado', payload.descripcion || payload.categoria);
-            } else {
-                const res = db.registrarGasto(payload);
-                if (!res.ok) {
-                    errores.appendChild(ui.banner('No se pudo registrar', res.error, 'danger'));
+                };
+                if (esNomina) delete cambios.referencia;
+                db.update('gastos', gasto.id, cambios);
+                ui.toastOk('Gasto actualizado', cambios.descripcion);
+                ctrl.cerrar();
+                return;
+            }
+
+            const cufe = importacion && importacion.datos ? importacion.datos.cufe : '';
+            const duplicado = db.buscarDuplicado({ tipo: 'gasto', cufe, referencia: payload.referencia });
+            if (duplicado && duplicado.certeza === 'cufe') {
+                errores.appendChild(ui.banner('Factura ya registrada',
+                    `El código CUFE de este PDF ya está registrado (${duplicado.doc.numero || duplicado.doc.descripcion}). No se registra dos veces.`,
+                    'danger'));
+                return;
+            }
+
+            if (!advertenciasAceptadas) {
+                const avisos = [];
+                if (duplicado) avisos.push(`Ya existe el gasto «${duplicado.doc.descripcion}» con la referencia ${payload.referencia}.`);
+                const totalLeido = importacion && importacion.datos ? U.toNumber(importacion.datos.total) : 0;
+                if (totalLeido > 0 && Math.abs(U.toNumber(payload.valor) - totalLeido) > Math.max(1000, totalLeido * 0.01)) {
+                    avisos.push(`El valor digitado (${U.money(payload.valor)}) no coincide con el total de la factura (${U.money(totalLeido)}).`);
+                }
+                if (avisos.length) {
+                    errores.appendChild(ui.banner('Revise antes de registrar', avisos.join(' '), 'warning'));
+                    advertenciasAceptadas = true;
+                    btnGuardar.textContent = 'Registrar de todos modos';
                     return;
                 }
-                ui.toastOk('Gasto registrado', `${payload.categoria} — ${U.money(payload.valor)}`);
             }
+
+            const res = db.registrarGasto({
+                ...payload,
+                origen: importacion ? 'pdf' : 'manual',
+                archivoOrigen: importacion ? importacion.archivo : '',
+                cufe
+            });
+            if (!res.ok) {
+                errores.appendChild(ui.banner('No se pudo registrar', res.error, 'danger'));
+                return;
+            }
+            ui.toastOk('Gasto registrado', `${payload.categoria} — ${U.money(payload.valor)}`);
             ctrl.cerrar();
+            if (lectura && typeof lectura.onRegistrado === 'function') lectura.onRegistrado(res.gasto);
         };
 
         formulario.addEventListener('submit', enviar);
@@ -454,6 +790,56 @@ ERP.gastos = (() => {
         }
     };
 
+    const ORIGENES = { pdf: 'PDF', nomina: 'Nómina', fijo: 'Fijo', variable: 'Variable', manual: 'Manual' };
+
+    const exportar = (lista) => {
+        if (!lista.length) {
+            ui.toastWarn('Nada que exportar', 'La tabla no tiene registros con los filtros actuales.');
+            return;
+        }
+        try {
+            const total = U.sum(lista, (g) => g.valor);
+            const porCategoria = [...U.groupBy(lista, 'categoria').entries()]
+                .map(([categoria, grupo]) => ({ categoria, registros: grupo.length, valor: U.sum(grupo, (g) => g.valor) }))
+                .sort((a, b) => b.valor - a.valor);
+
+            ERP.excel.descargar({
+                archivo: ERP.excel.nombreArchivo('gastos'),
+                titulo: 'Gastos',
+                hojas: [
+                    {
+                        nombre: 'Gastos',
+                        totales: true,
+                        columnas: [
+                            { titulo: 'Fecha', tipo: 'fecha' }, { titulo: 'Periodo' }, { titulo: 'Categoría' },
+                            { titulo: 'Descripción' }, { titulo: 'Proveedor' }, { titulo: 'Referencia' },
+                            { titulo: 'Medio' }, { titulo: 'Estado' }, { titulo: 'Valor', tipo: 'moneda' }, { titulo: 'Origen' }
+                        ],
+                        filas: lista.map((g) => [
+                            g.fecha, U.fmtPeriod(U.periodOf(g.fecha)), g.categoria, g.descripcion, g.proveedor || '',
+                            g.origen === 'nomina' ? '' : (g.referencia || ''), g.medio,
+                            g.pagado === false ? 'Por pagar' : 'Pagado', g.valor,
+                            g.origen === 'pdf' ? `PDF: ${g.archivoOrigen || ''}` : (ORIGENES[g.origen] || 'Manual')
+                        ])
+                    },
+                    {
+                        nombre: 'Por categoría',
+                        totales: true,
+                        columnas: [
+                            { titulo: 'Categoría' }, { titulo: 'Registros', tipo: 'entero' },
+                            { titulo: 'Total', tipo: 'moneda' }, { titulo: 'Participación', tipo: 'porcentaje' }
+                        ],
+                        filas: porCategoria.map((c) => [c.categoria, c.registros, c.valor, total ? c.valor / total : 0])
+                    }
+                ]
+            });
+            ui.toastOk('Excel generado', `${lista.length} gastos exportados.`);
+        } catch (error) {
+            console.error(error);
+            ui.toastError('No se pudo generar el Excel', 'Revise la consola para más detalle.');
+        }
+    };
+
     const vista = (contenedor) => {
         const gastos = U.sortBy(db.all('gastos'), 'fecha', 'desc');
         const periodoActual = U.periodOf(U.today());
@@ -466,6 +852,7 @@ ERP.gastos = (() => {
 
         const filtros = { categoria: '', periodo: '' };
         const zonaTabla = el('div');
+        let tablaActual = null;
 
         const periodosDisponibles = [...new Set(gastos.map((g) => U.periodOf(g.fecha)))]
             .sort().reverse()
@@ -483,11 +870,19 @@ ERP.gastos = (() => {
             const tabla = ui.tabla(lista, [
                 { clave: 'fecha', titulo: 'Fecha', tipo: 'fecha' },
                 { clave: 'categoria', titulo: 'Categoría' },
-                { clave: 'descripcion', titulo: 'Descripción', ajustar: true },
+                {
+                    clave: 'descripcion', titulo: 'Descripción', tipo: 'nodo', ordenable: true, ajustar: true,
+                    valor: (g) => `${g.descripcion} ${g.proveedor || ''} ${g.origen === 'pdf' ? 'pdf' : ''}`,
+                    render: (g) => el('div', { class: 'row row-wrap' }, [
+                        el('span', { text: g.descripcion }),
+                        g.origen === 'pdf' ? ui.badge('PDF', 'info') : null
+                    ])
+                },
                 { clave: 'medio', titulo: 'Medio' },
                 { clave: 'valor', titulo: 'Valor', tipo: 'moneda' },
                 {
                     clave: 'pagado', titulo: 'Estado', tipo: 'nodo',
+                    valor: (g) => (g.pagado === false ? 'Por pagar' : 'Pagado'),
                     render: (g) => ui.badge(g.pagado === false ? 'Por pagar' : 'Pagado',
                         g.pagado === false ? 'warning' : 'success')
                 },
@@ -507,12 +902,13 @@ ERP.gastos = (() => {
             ], {
                 ordenInicial: 'fecha',
                 dirInicial: 'desc',
-                textoBusqueda: 'Buscar por descripción o categoría…',
+                textoBusqueda: 'Buscar por descripción, proveedor o categoría…',
                 porPagina: 12,
                 totales: (l) => ({ fecha: `${l.length} gastos`, valor: U.sum(l, (g) => g.valor) })
             });
 
             zonaTabla.appendChild(ui.card(null, tabla.nodo, { sinRelleno: true }));
+            tablaActual = tabla;
         };
 
         U.appendAll(contenedor, [
@@ -521,10 +917,20 @@ ERP.gastos = (() => {
                     el('h1', { text: 'Gastos' }),
                     el('p', { text: 'Gastos operativos y administrativos categorizados para su imputación a los estados financieros.' })
                 ]),
-                el('button', {
-                    class: 'btn', text: '+ Nuevo gasto', attrs: { type: 'button' },
-                    on: { click: () => abrirFormulario() }
-                })
+                el('div', { class: 'view-actions' }, [
+                    el('button', {
+                        class: 'btn btn-secondary', text: '⤓ Descargar Excel', attrs: { type: 'button' },
+                        on: { click: () => exportar(tablaActual ? tablaActual.filas() : []) }
+                    }),
+                    el('button', {
+                        class: 'btn btn-secondary', text: 'Cargar factura PDF', attrs: { type: 'button' },
+                        on: { click: () => ERP.importador.abrir('gasto') }
+                    }),
+                    el('button', {
+                        class: 'btn', text: '+ Nuevo gasto', attrs: { type: 'button' },
+                        on: { click: () => abrirFormulario() }
+                    })
+                ])
             ]),
 
             el('div', { class: 'grid-kpi' }, [
@@ -563,5 +969,5 @@ ERP.gastos = (() => {
         pintarTabla();
     };
 
-    return { vista, abrirFormulario };
+    return { vista, abrirFormulario, exportar };
 })();

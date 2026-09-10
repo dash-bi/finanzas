@@ -44,6 +44,14 @@ python -m http.server 8000
 - La caja es **derivada**, nunca almacenada.
 - El **balance general cuadra**; si no cuadrara, la interfaz lo advierte.
 
+### Edición, Excel y facturas en PDF
+
+- **Edición** en Ventas, Cartera y abonos, Compras, Gastos e Inventario. Editar no sobrescribe: revierte el efecto del documento original (existencias, cartera, cuentas por pagar) y aplica el nuevo con las mismas validaciones. Las facturas conservan su número y el costo congelado; revertir una compra devuelve el costo promedio exacto.
+- **Descargar Excel** en esos cinco módulos. Exporta lo que muestra la tabla (búsqueda y filtros incluidos) en un `.xlsx` real: números y fechas tipados, filtros activos, encabezado fijo y totales con `SUBTOTAL`, que se recalculan al filtrar en Excel. Ventas, compras y cartera incluyen hojas de detalle.
+- **Cargar factura PDF** en Ventas, Compras y Gastos. El PDF se lee dentro del navegador —el archivo no sale del equipo—; se reconoce si es compra, gasto o venta comparando los NIT con el de la empresa, y se leen número, fechas, tercero, totales, CUFE e ítems. Se abre el formulario prellenado para revisar y confirmar: nada se registra solo. Un CUFE ya registrado bloquea el duplicado.
+  - No se pueden leer los PDF escaneados (solo imagen) ni los protegidos con contraseña; la aplicación lo indica y la factura se registra a mano.
+- **Vendedor**: en cada venta se elige de la lista de empleados activos de Nómina.
+
 ---
 
 ## Estructura
@@ -67,7 +75,10 @@ python -m http.server 8000
         ├── pdf.js           Escritor de PDF
         ├── auth.js          Sesión y permisos por rol
         ├── lines.js         Editor de líneas de documento
+        ├── xlsx.js          Escritor de Excel (.xlsx) sin librerías
+        ├── pdfreader.js     Lector de texto de PDF sin librerías
         ├── contacts.js · inventory.js · purchases.js · billing.js
+        ├── importer.js      Interpretación de facturas PDF
         ├── financials.js    Motor de estados financieros
         ├── dashboard.js · tools.js · payroll.js
         └── app.js           Arranque, enrutador y tema

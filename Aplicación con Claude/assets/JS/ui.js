@@ -424,7 +424,8 @@ ERP.ui = (() => {
             const thead = el('thead', {}, [
                 el('tr', {}, columnas.map((col) => {
                     const esNum = col.tipo === 'numero' || col.tipo === 'moneda';
-                    const ordenable = col.ordenable !== false && col.tipo !== 'nodo';
+                    // Una columna visual se puede ordenar si declara el valor que representa.
+                    const ordenable = col.ordenable !== false && (col.tipo !== 'nodo' || typeof col.valor === 'function');
                     const activo = estado.orden === col.clave;
 
                     const th = el('th', {
@@ -535,7 +536,9 @@ ERP.ui = (() => {
         contenedor.appendChild(zonaPager);
         render();
 
-        return { nodo: contenedor, refrescar: render, estado };
+        // filas(): lo que el usuario está viendo —búsqueda y orden aplicados,
+        // todas las páginas—. Es lo que se exporta a Excel.
+        return { nodo: contenedor, refrescar: render, estado, filas: () => ordenar(filtrar()) };
     };
 
     return {
