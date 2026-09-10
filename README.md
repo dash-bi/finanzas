@@ -24,6 +24,8 @@ python -m http.server 8000
 | `contador` | `conta123` | Contador | Todo excepto configuración |
 | `vendedor` | `venta123` | Vendedor | Ventas, clientes, cartera e inventario |
 
+**Configuración es exclusiva del Administrador.** No aparece en el menú de los demás roles, no se puede abrir por otra vía y cada acción (guardar, editar usuarios, exportar, reiniciar) vuelve a comprobar el rol. Si el administrador le cambia el rol a alguien con la sesión abierta, su menú se ajusta sin recargar, también en otras pestañas del mismo navegador.
+
 > Son credenciales de demostración, visibles a propósito en la pantalla de acceso. El administrador puede cambiar usuario, nombre, rol y contraseña de cada uno en **Configuración → Usuarios del sistema**; en cuanto una credencial deja de ser la de demostración, la pantalla de acceso deja de mostrarla. La autenticación local **separa responsabilidades dentro de la aplicación; no es un control de seguridad**. Cámbialas antes de usar el sistema con información real.
 
 ---

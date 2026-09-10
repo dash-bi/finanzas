@@ -14,9 +14,22 @@ ERP.configuracion = (() => {
     const ui = ERP.ui;
     const db = ERP.db;
 
+    /**
+     * Solo el administrador usa Configuración. El menú ya la oculta a los demás roles,
+     * pero cada acción revalida el rol vigente: la pantalla pudo quedar abierta después
+     * de que se le quitara el rol de administrador a esta sesión (aquí o en otra pestaña).
+     */
+    const autorizado = () => {
+        if (ERP.auth.sincronizarSesion() && ERP.auth.puede('configuracion')) return true;
+        ui.toastError('Sin permiso', 'Solo el administrador puede usar Configuración.');
+        ERP.app.refrescar();
+        return false;
+    };
+
     /* ---------- Edición de un usuario del sistema ---------- */
 
     const abrirEdicionUsuario = (registro) => {
+        if (!autorizado()) return;
         const actual = ERP.auth.usuario();
         const esPropio = Boolean(actual && actual.id === registro.id);
 
@@ -84,6 +97,11 @@ ERP.configuracion = (() => {
             if (event) event.preventDefault();
             U.clear(errores);
 
+            if (!autorizado()) {
+                ctrl.cerrar();
+                return;
+            }
+
             if (campos.clave.value !== campos.confirmacion.value) {
                 errores.appendChild(ui.banner('Las contraseñas no coinciden', 'Escriba la misma contraseña en los dos campos.', 'danger'));
                 return;
@@ -138,6 +156,7 @@ ERP.configuracion = (() => {
         };
 
         const guardar = () => {
+            if (!autorizado()) return;
             const ivaPct = U.toNumber(campos.ivaPct.value);
             if (ivaPct < 0 || ivaPct > 100) {
                 ui.toastError('IVA inválido', 'El porcentaje debe estar entre 0 y 100.');
@@ -176,6 +195,7 @@ ERP.configuracion = (() => {
             class: 'btn btn-secondary', text: '⤓ Exportar datos (JSON)', attrs: { type: 'button' },
             on: {
                 click: () => {
+                    if (!autorizado()) return;
                     U.downloadBlob(
                         new Blob([db.exportJSON()], { type: 'application/json' }),
                         `respaldo-erp-${U.today()}.json`
@@ -189,6 +209,7 @@ ERP.configuracion = (() => {
             class: 'btn btn-danger', text: 'Reiniciar datos de demostración', attrs: { type: 'button' },
             on: {
                 click: async () => {
+                    if (!autorizado()) return;
                     const ok = await ui.confirmar({
                         titulo: 'Reiniciar todos los datos',
                         mensaje: '¿Borrar toda la información y regenerar los datos de demostración?',
@@ -196,7 +217,7 @@ ERP.configuracion = (() => {
                         textoAceptar: 'Borrar y regenerar',
                         peligroso: true
                     });
-                    if (!ok) return;
+                    if (!ok || !autorizado()) return;
                     db.reset();
                     ui.toastOk('Datos regenerados', 'La demostración volvió a su estado inicial.');
                 }
@@ -590,6 +611,24 @@ ERP.app = (() => {
     };
 
     const montarAplicacion = () => {
+        // Los permisos se leen del registro vigente en cada montaje: si el rol cambió
+        // (aquí o en otra pestaña), el menú deja de ofrecer lo que ya no corresponde.
+        const rolAnterior = ERP.auth.usuario() ? ERP.auth.usuario().rol : null;
+        const sesion = ERP.auth.sincronizarSesion();
+        if (!sesion) {
+            pantallaAcceso();
+            if (rolAnterior) ui.toastWarn('Sesión cerrada', 'Su usuario ya no existe o fue desactivado. Ingrese de nuevo.');
+            return;
+        }
+        if (!ERP.auth.puede(estado.vista)) {
+            const anterior = MODULOS[estado.vista];
+            estado.vista = 'dashboard';
+            if (anterior && rolAnterior && rolAnterior !== sesion.rol) {
+                ui.toastInfo('Su acceso cambió',
+                    `Ahora su rol es ${ERP.auth.etiquetaRol(sesion.rol)}: ${anterior.etiqueta} ya no está disponible.`);
+            }
+        }
+
         U.clear(raiz);
 
         const contenedorVista = el('div', { class: 'view' });
@@ -630,9 +669,18 @@ ERP.app = (() => {
         }, 90);
         U.bus.on('db:changed', repintar);
 
+        // Otra pestaña guardó cambios (por ejemplo, el administrador cambió un rol):
+        // se releen los datos para que permisos y cifras no queden desactualizados.
+        window.addEventListener('storage', (event) => {
+            if (event.key !== ERP.db.STORAGE_KEY || event.newValue === null) return;
+            ERP.db.load();
+            repintar();
+        });
+
         U.bus.on('db:persist-error', () => {
-            ui.toastError('No se pudo guardar',
-                'El almacenamiento del navegador está lleno o bloqueado. Exporte un respaldo desde Configuración.');
+            ui.toastError('No se pudo guardar', ERP.auth.puede('configuracion')
+                ? 'El almacenamiento del navegador está lleno o bloqueado. Exporte un respaldo desde Configuración.'
+                : 'El almacenamiento del navegador está lleno o bloqueado. Avise al administrador para que exporte un respaldo.');
         });
 
         // El menú lateral pasa de colapsable a cajón según el ancho.
@@ -651,11 +699,11 @@ ERP.app = (() => {
 
         if (carga.seeded) {
             window.setTimeout(() => ui.toastInfo('Datos de demostración cargados',
-                'Puede auditar cada módulo de inmediato. Reinícielos o expórtelos desde Configuración.'), 900);
+                'Puede auditar cada módulo de inmediato. El administrador puede reiniciarlos o exportarlos desde Configuración.'), 900);
         }
     };
 
-    return { iniciar, irA, MODULOS, estado };
+    return { iniciar, irA, refrescar: montarAplicacion, MODULOS, estado };
 })();
 
 document.addEventListener('DOMContentLoaded', ERP.app.iniciar);

@@ -1349,7 +1349,7 @@ ERP.db = (() => {
        ============================================================ */
 
     return {
-        load, reset, persist, exportJSON, hashClave,
+        STORAGE_KEY, load, reset, persist, exportJSON, hashClave,
         all, get, insert, update, remove,
         config, updateConfig,
         clientes, proveedores, productos, productoPorId, terceroPorId,
