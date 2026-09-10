@@ -944,6 +944,53 @@ ERP.db = (() => {
     };
 
     /* ============================================================
+       Usuarios del sistema
+       ============================================================ */
+
+    const ROLES_VALIDOS = ['administrador', 'contador', 'vendedor'];
+
+    /**
+     * Edita usuario, nombre, rol y, si se indica, la contraseña.
+     * Una contraseña vacía conserva la actual.
+     */
+    const actualizarUsuario = (id, cambios) => {
+        const registro = get('usuarios', id);
+        if (!registro) return fallo('El usuario no existe.');
+
+        const usuario = String(cambios.usuario || '').trim().toLowerCase();
+        const nombre = String(cambios.nombre || '').trim();
+        const rol = cambios.rol;
+        const clave = String(cambios.clave || '');
+
+        if (!/^[a-z0-9._-]{3,30}$/.test(usuario)) {
+            return fallo('El usuario debe tener entre 3 y 30 caracteres: letras sin tildes, números, punto, guion o guion bajo, sin espacios.');
+        }
+        if (all('usuarios').some((u) => u.id !== id && String(u.usuario).toLowerCase() === usuario)) {
+            return fallo(`Ya existe otro usuario «${usuario}».`);
+        }
+        if (nombre.length < 3) return fallo('El nombre debe tener al menos 3 caracteres.');
+        if (!ROLES_VALIDOS.includes(rol)) return fallo('Seleccione un rol válido.');
+        if (clave && clave.trim() === '') return fallo('La contraseña no puede estar formada solo por espacios.');
+        if (clave && clave.length < 6) return fallo('La contraseña debe tener al menos 6 caracteres.');
+
+        // El sistema nunca puede quedar sin alguien que administre usuarios y configuración.
+        if (registro.rol === 'administrador' && rol !== 'administrador') {
+            const otrosAdministradores = all('usuarios').filter(
+                (u) => u.id !== id && u.rol === 'administrador' && u.activo !== false);
+            if (!otrosAdministradores.length) {
+                return fallo('Es el único administrador. Asigne ese rol a otro usuario antes de cambiarle el rol a este.');
+            }
+        }
+
+        Object.assign(registro, { usuario, nombre, rol });
+        if (clave) registro.clave = hashClave(clave);
+
+        persist();
+        U.bus.emit('db:changed', { coleccion: 'usuarios', motivo: 'update' });
+        return { ok: true, usuario: { id: registro.id, usuario, nombre, rol }, claveCambiada: Boolean(clave) };
+    };
+
+    /* ============================================================
        Semilla de demostración
        ============================================================ */
 
@@ -1313,6 +1360,7 @@ ERP.db = (() => {
         registrarCompra, registrarVenta, anularVenta,
         registrarAbono, eliminarAbono, registrarPagoCompra, registrarGasto,
         editarVenta, editarCompra, editarAbono, buscarDuplicado, asegurarTercero,
+        actualizarUsuario,
         CATEGORIAS_GASTO, MEDIOS_PAGO,
         get persistente() { return persistenciaActiva; }
     };

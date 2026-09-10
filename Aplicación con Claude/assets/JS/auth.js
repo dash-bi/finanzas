@@ -114,9 +114,22 @@ ERP.auth = (() => {
         }
     };
 
+    /** Refleja en la sesión abierta los cambios hechos al propio usuario (nombre, rol, usuario). */
+    const sincronizarSesion = () => {
+        if (!usuarioActual) return null;
+        const vigente = ERP.db.all('usuarios').find((u) => u.id === usuarioActual.id);
+        if (!vigente || vigente.activo === false) {
+            cerrarSesion();
+            return null;
+        }
+        usuarioActual = { id: vigente.id, usuario: vigente.usuario, nombre: vigente.nombre, rol: vigente.rol };
+        guardarSesion();
+        return usuarioActual;
+    };
+
     return {
         ROLES, PERMISOS,
-        iniciarSesion, cerrarSesion, restaurarSesion,
+        iniciarSesion, cerrarSesion, restaurarSesion, sincronizarSesion,
         usuario, puede, modulosPermitidos, etiquetaRol
     };
 })();

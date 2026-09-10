@@ -14,6 +14,110 @@ ERP.configuracion = (() => {
     const ui = ERP.ui;
     const db = ERP.db;
 
+    /* ---------- Edición de un usuario del sistema ---------- */
+
+    const abrirEdicionUsuario = (registro) => {
+        const actual = ERP.auth.usuario();
+        const esPropio = Boolean(actual && actual.id === registro.id);
+
+        const campos = {
+            usuario: ui.input({ valor: registro.usuario }),
+            nombre: ui.input({ valor: registro.nombre }),
+            rol: ui.select(Object.entries(ERP.auth.ROLES).map(([valor, r]) => ({ valor, texto: r.etiqueta })), { valor: registro.rol }),
+            clave: ui.input({ tipo: 'password', placeholder: 'Déjela vacía para no cambiarla', autocomplete: 'new-password' }),
+            confirmacion: ui.input({ tipo: 'password', placeholder: 'Repita la nueva contraseña', autocomplete: 'new-password' })
+        };
+
+        const descripcionRol = el('span', { class: 'hint' });
+        const actualizarDescripcion = () => {
+            const rol = ERP.auth.ROLES[campos.rol.value];
+            const modulos = (ERP.auth.PERMISOS[campos.rol.value] || []).length;
+            descripcionRol.textContent = rol ? `${rol.descripcion} ${modulos} módulos.` : '';
+        };
+        campos.rol.addEventListener('change', actualizarDescripcion);
+        actualizarDescripcion();
+
+        const campoRol = ui.campo('Rol', campos.rol);
+        campoRol.appendChild(descripcionRol);
+
+        const mostrarClaves = el('input', { attrs: { type: 'checkbox' } });
+        mostrarClaves.addEventListener('change', () => {
+            const tipo = mostrarClaves.checked ? 'text' : 'password';
+            campos.clave.type = tipo;
+            campos.confirmacion.type = tipo;
+        });
+
+        const errores = el('div');
+
+        const formulario = el('form', { class: 'stack' }, [
+            errores,
+            esPropio ? ui.banner('Está editando su propio usuario',
+                'Si se asigna un rol sin acceso a Configuración, saldrá de esta pantalla al guardar.', 'info') : null,
+            el('div', { class: 'grid-form' }, [
+                ui.campo('Usuario', campos.usuario, { ayuda: 'Con el que se inicia sesión. Letras sin tildes, números, punto o guion.' }),
+                ui.campo('Nombre', campos.nombre),
+                campoRol
+            ]),
+            el('fieldset', { class: 'stack-sm' }, [
+                el('legend', { text: 'Contraseña' }),
+                el('div', { class: 'grid-form' }, [
+                    ui.campo('Nueva contraseña', campos.clave, { ayuda: 'Mínimo 6 caracteres. Si la deja vacía se conserva la actual.' }),
+                    ui.campo('Confirmar contraseña', campos.confirmacion)
+                ]),
+                el('label', { class: 'check' }, [mostrarClaves, el('span', { text: 'Mostrar contraseñas' })])
+            ])
+        ]);
+
+        const btnGuardar = el('button', { class: 'btn', text: 'Guardar cambios', attrs: { type: 'button' } });
+        const btnCancelar = el('button', { class: 'btn btn-secondary', text: 'Cancelar', attrs: { type: 'button' } });
+
+        const ctrl = ui.modal({
+            titulo: 'Editar usuario',
+            subtitulo: `${registro.nombre} · ${registro.usuario}`,
+            contenido: formulario,
+            acciones: [btnCancelar, btnGuardar]
+        });
+
+        btnCancelar.addEventListener('click', () => ctrl.cerrar());
+
+        const enviar = (event) => {
+            if (event) event.preventDefault();
+            U.clear(errores);
+
+            if (campos.clave.value !== campos.confirmacion.value) {
+                errores.appendChild(ui.banner('Las contraseñas no coinciden', 'Escriba la misma contraseña en los dos campos.', 'danger'));
+                return;
+            }
+
+            const res = db.actualizarUsuario(registro.id, {
+                usuario: campos.usuario.value,
+                nombre: campos.nombre.value,
+                rol: campos.rol.value,
+                clave: campos.clave.value
+            });
+
+            if (!res.ok) {
+                errores.appendChild(ui.banner('No se pudo guardar', res.error, 'danger'));
+                return;
+            }
+
+            ctrl.cerrar();
+            ui.toastOk('Usuario actualizado',
+                `${res.usuario.nombre} (${res.usuario.usuario})${res.claveCambiada ? ' · contraseña cambiada' : ''}.`);
+
+            if (esPropio) {
+                const sesion = ERP.auth.sincronizarSesion();
+                if (sesion && !ERP.auth.puede('configuracion')) {
+                    ui.toastInfo('Su acceso cambió', `Ahora su rol es ${ERP.auth.etiquetaRol(sesion.rol)}: Configuración ya no está disponible.`);
+                    ERP.app.irA('dashboard');
+                }
+            }
+        };
+
+        formulario.addEventListener('submit', enviar);
+        btnGuardar.addEventListener('click', enviar);
+    };
+
     const vista = (contenedor) => {
         const cfg = db.config();
 
@@ -142,16 +246,29 @@ ERP.configuracion = (() => {
                         el('th', { text: 'Usuario', attrs: { scope: 'col' } }),
                         el('th', { text: 'Nombre', attrs: { scope: 'col' } }),
                         el('th', { text: 'Rol', attrs: { scope: 'col' } }),
-                        el('th', { text: 'Módulos con acceso', attrs: { scope: 'col' } })
+                        el('th', { class: 'num', text: 'Módulos con acceso', attrs: { scope: 'col' } }),
+                        el('th', { attrs: { scope: 'col' } }, [el('span', { class: 'visually-hidden', text: 'Acciones' })])
                     ])]),
-                    el('tbody', {}, usuarios.map((u) => el('tr', {}, [
-                        el('td', { class: 'strong', text: u.usuario }),
-                        el('td', { text: u.nombre }),
-                        el('td', {}, [ui.badge(ERP.auth.etiquetaRol(u.rol), 'info')]),
-                        el('td', { class: 'num', text: U.num((ERP.auth.PERMISOS[u.rol] || []).length) })
-                    ])))
+                    el('tbody', {}, usuarios.map((u) => {
+                        const actual = ERP.auth.usuario();
+                        return el('tr', {}, [
+                            el('td', {}, [el('div', { class: 'row' }, [
+                                el('span', { class: 'strong', text: u.usuario }),
+                                actual && actual.id === u.id ? ui.badge('Usted', 'neutral') : null
+                            ])]),
+                            el('td', { text: u.nombre }),
+                            el('td', {}, [ui.badge(ERP.auth.etiquetaRol(u.rol), 'info')]),
+                            el('td', { class: 'num', text: U.num((ERP.auth.PERMISOS[u.rol] || []).length) }),
+                            el('td', { class: 'text-right' }, [el('button', {
+                                class: 'btn btn-ghost btn-sm', text: 'Editar',
+                                attrs: { type: 'button', 'aria-label': `Editar el usuario ${u.usuario}` },
+                                on: { click: () => abrirEdicionUsuario(u) }
+                            })])
+                        ]);
+                    }))
                 ])
             ]), {
+                subtitulo: 'Usuario, nombre, rol y contraseña de quienes acceden al sistema',
                 sinRelleno: true,
                 pie: el('p', {
                     class: 'text-muted',
@@ -266,17 +383,20 @@ ERP.app = (() => {
             ui.toastOk(`Bienvenida, ${res.usuario.nombre}`, ERP.auth.etiquetaRol(res.usuario.rol));
         });
 
-        const credenciales = el('div', { class: 'login-hint' }, [
+        // Solo se muestran las credenciales de demostración que siguen vigentes: si el
+        // administrador cambia un usuario o su contraseña, esa pista desaparece.
+        const registros = ERP.db.all('usuarios');
+        const demostracion = [['admin', 'admin123'], ['contador', 'conta123'], ['vendedor', 'venta123']]
+            .map(([u, c]) => ({ u, c, registro: registros.find((r) => r.usuario === u && r.clave === ERP.db.hashClave(c) && r.activo !== false) }))
+            .filter((d) => d.registro);
+
+        const credenciales = demostracion.length ? el('div', { class: 'login-hint' }, [
             el('p', { class: 'strong', text: 'Usuarios de demostración' }),
-            el('ul', {}, [
-                ['admin', 'admin123', 'Administrador'],
-                ['contador', 'conta123', 'Contador'],
-                ['vendedor', 'venta123', 'Vendedor']
-            ].map(([u, c, rol]) => el('li', {}, [
-                el('code', { text: `${u} / ${c}` }),
-                el('span', { text: ` — ${rol}` })
+            el('ul', {}, demostracion.map((d) => el('li', {}, [
+                el('code', { text: `${d.u} / ${d.c}` }),
+                el('span', { text: ` — ${ERP.auth.etiquetaRol(d.registro.rol)}` })
             ])))
-        ]);
+        ]) : null;
 
         raiz.appendChild(el('div', { class: 'login-screen' }, [
             el('main', { class: 'login-card' }, [
