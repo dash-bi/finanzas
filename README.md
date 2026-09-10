@@ -8,7 +8,7 @@ El usuario registra únicamente transacciones operativas —compras, ventas, gas
 
 ## Cómo abrirla
 
-Abrir `index.html` en el navegador (doble clic), o visitar el despliegue en Vercel.
+Abrir `Aplicación con Claude/index.html` en el navegador (doble clic), o visitar el despliegue en Vercel.
 
 Si el navegador bloquea el almacenamiento local en `file://`, la aplicación lo advierte. En ese caso, servirla desde la carpeta de la app:
 
@@ -50,11 +50,13 @@ python -m http.server 8000
 
 ```text
 .
-├── index.html               Punto de entrada (raíz: es lo que sirve Vercel)
-├── CLAUDE.md                Especificación funcional
-├── implementation_plan.md   Modelo de datos y plan de construcción
 ├── Agents.md                Parámetros y reglas de construcción
-└── assets/
+├── vercel.json              Apunta el despliegue a la carpeta de la app
+└── Aplicación con Claude/
+    ├── index.html           Punto de entrada
+    ├── CLAUDE.md            Especificación funcional
+    ├── implementation_plan.md
+    └── assets/
     ├── CSS/                 base · layout · components
     ├── IMG/                 logo
     └── JS/
@@ -75,9 +77,13 @@ python -m http.server 8000
 
 ## Despliegue
 
-Es un sitio estático sin build. Vercel lo sirve tal cual desde la raíz del repositorio: no hace falta configurar *Framework Preset*, *Build Command* ni *Output Directory*.
+Es un sitio estático sin build. Como `index.html` vive dentro de `Aplicación con Claude/` y no en la raíz del repositorio, `vercel.json` le indica a Vercel dónde está:
 
-Por eso `index.html` debe permanecer **en la raíz**. Si se mueve a una subcarpeta, el despliegue responde 404.
+```json
+{ "outputDirectory": "Aplicación con Claude" }
+```
+
+Si el despliegue respondiera 404, revisar que **Root Directory** esté vacío en los ajustes del proyecto en Vercel: `vercel.json` se resuelve desde la raíz del repositorio.
 
 ---
 
@@ -88,6 +94,16 @@ Los datos de demostración —empresa, clientes, proveedores, NIT, teléfonos, c
 La información se guarda en el `localStorage` del navegador. Nunca sale del equipo: no hay backend, ni analítica, ni llamadas de red. Desde **Configuración** se puede exportar un respaldo en JSON o reiniciar la demostración.
 
 > Los respaldos exportados sí contienen datos reales de operación. Están excluidos del repositorio en `.gitignore`.
+
+---
+
+## Apariencia
+
+La piel visual —morado de marca, verde ácido de acento, fondo lavanda y esquinas redondeadas— vive **solo en `assets/CSS/`**. Los tres archivos son `base.css` (tokens de color, tipografía y radios), `layout.css` (barra lateral, barra superior y rejillas) y `components.css` (tarjetas, botones, tablas y modales).
+
+Cambiar el aspecto no exige tocar JavaScript: los gráficos leen sus colores de las variables `--c1` … `--c8`.
+
+La tipografía (Outfit y Plus Jakarta Sans) se pide a Google Fonts desde `index.html`. Sin conexión, la pila del sistema la sustituye y la aplicación sigue funcionando igual.
 
 ---
 
