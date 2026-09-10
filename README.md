@@ -8,7 +8,7 @@ El usuario registra únicamente transacciones operativas —compras, ventas, gas
 
 ## Cómo abrirla
 
-Abrir `Aplicación con Claude/index.html` en el navegador (doble clic).
+Abrir `index.html` en el navegador (doble clic), o visitar el despliegue en Vercel.
 
 Si el navegador bloquea el almacenamiento local en `file://`, la aplicación lo advierte. En ese caso, servirla desde la carpeta de la app:
 
@@ -49,10 +49,11 @@ python -m http.server 8000
 ## Estructura
 
 ```text
-Aplicación con Claude/
-├── index.html
+.
+├── index.html               Punto de entrada (raíz: es lo que sirve Vercel)
 ├── CLAUDE.md                Especificación funcional
 ├── implementation_plan.md   Modelo de datos y plan de construcción
+├── Agents.md                Parámetros y reglas de construcción
 └── assets/
     ├── CSS/                 base · layout · components
     ├── IMG/                 logo
@@ -70,7 +71,13 @@ Aplicación con Claude/
         └── app.js           Arranque, enrutador y tema
 ```
 
-`Agents.md` contiene los parámetros y las reglas de construcción del proyecto.
+---
+
+## Despliegue
+
+Es un sitio estático sin build. Vercel lo sirve tal cual desde la raíz del repositorio: no hace falta configurar *Framework Preset*, *Build Command* ni *Output Directory*.
+
+Por eso `index.html` debe permanecer **en la raíz**. Si se mueve a una subcarpeta, el despliegue responde 404.
 
 ---
 

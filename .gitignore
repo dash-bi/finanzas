@@ -1,16 +1,16 @@
 # ---------------------------------------------------------------
-# Construcción anterior, superada por "Aplicación con Claude/".
-# Se conserva en disco pero no se publica: tener un segundo
-# index.html en la raíz haría que GitHub Pages sirviera la app
-# equivocada.
+# Construcción anterior, superada por la app actual. Se conserva
+# en disco pero no se publica: un segundo index.html competiría
+# con el de la raíz, que es el que despliega Vercel.
 # ---------------------------------------------------------------
-/index.html
-/app.js
-/styles.css
-/modules/
-/serve.py
-/iniciar_app.bat
-/iniciar_app.ps1
+/_version-anterior/
+
+# ---------------------------------------------------------------
+# Build paralela ajena a este repositorio (creada el 09/09/2026).
+# No se publica para no mezclar dos implementaciones distintas.
+# Si debe formar parte del proyecto, quitar esta línea.
+# ---------------------------------------------------------------
+/assets/JS/modules/
 
 # --- Secretos: nunca deben llegar al repositorio ---
 .env
