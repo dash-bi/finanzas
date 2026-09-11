@@ -231,6 +231,21 @@ legend { padding: 0 var(--sp-2); font-size: 0.76rem; font-weight: 800; color: va
 }
 .check input { width: 17px; height: 17px; accent-color: var(--primary); }
 
+/* Matriz de permisos por rol: una columna de casillas por rol */
+.permisos-rol .col-rol { text-align: center; width: 128px; }
+.permisos-rol input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; vertical-align: middle; }
+.permisos-rol input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.55; }
+
+/* En móvil la columna del administrador (siempre todo, no editable) sobra:
+   se oculta para que las casillas de Contador y Vendedor quepan sin desplazar. */
+@media (max-width: 560px) {
+    table.data.permisos-rol th,
+    table.data.permisos-rol td { padding-left: 8px; padding-right: 8px; }
+    table.data.permisos-rol td:first-child { white-space: normal; min-width: 118px; }
+    .permisos-rol .col-rol { width: auto; }
+    .permisos-rol .col-admin { display: none; }
+}
+
 /* Grupo de opciones tipo segmento */
 .segmented {
     display: inline-flex;

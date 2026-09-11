@@ -21,15 +21,19 @@ ERP.auth = (() => {
         },
         contador: {
             etiqueta: 'Contador',
-            descripcion: 'Operación contable y financiera completa, sin configuración del sistema.'
+            descripcion: 'Operación contable y financiera.'
         },
         vendedor: {
             etiqueta: 'Vendedor',
-            descripcion: 'Ventas, clientes, cartera y consulta de inventario.'
+            descripcion: 'Operación comercial.'
         }
     };
 
-    /** Módulos accesibles por rol. El orden define el menú lateral. */
+    /**
+     * Módulos por defecto de cada rol, usados mientras el administrador no guarde
+     * otra selección en Configuración. La lista del administrador es la lista
+     * completa de módulos: un módulo que no esté en ella no lo ve nadie.
+     */
     const PERMISOS = {
         administrador: ['dashboard', 'clientes', 'proveedores', 'inventario', 'compras', 'gastos',
             'ventas', 'cartera', 'financieros', 'equilibrio', 'prestamos', 'nomina', 'configuracion'],
@@ -38,12 +42,52 @@ ERP.auth = (() => {
         vendedor: ['dashboard', 'clientes', 'inventario', 'ventas', 'cartera']
     };
 
-    const puede = (modulo) => {
-        if (!usuarioActual) return false;
-        return (PERMISOS[usuarioActual.rol] || []).includes(modulo);
+    /** Módulos que nunca se delegan a otro rol. */
+    const SOLO_ADMINISTRADOR = ['configuracion'];
+
+    /**
+     * Módulos vigentes de un rol. El administrador los tiene todos; los demás roles
+     * ven la selección guardada en Configuración o, si no existe, la de PERMISOS.
+     * Se filtra contra la lista completa para ignorar claves desconocidas y para
+     * que un dato alterado no pueda abrir Configuración a otro rol.
+     */
+    const modulosDeRol = (rol) => {
+        const todos = PERMISOS.administrador;
+        if (rol === 'administrador') return todos;
+        if (!ROLES[rol]) return [];
+        const guardados = (ERP.db.config().permisosRol || {})[rol];
+        const base = Array.isArray(guardados) ? guardados : PERMISOS[rol];
+        return todos.filter((clave) => base.includes(clave) && !SOLO_ADMINISTRADOR.includes(clave));
     };
 
-    const modulosPermitidos = () => (usuarioActual ? PERMISOS[usuarioActual.rol] || [] : []);
+    const puede = (modulo) => {
+        if (!usuarioActual) return false;
+        return modulosDeRol(usuarioActual.rol).includes(modulo);
+    };
+
+    const modulosPermitidos = () => (usuarioActual ? modulosDeRol(usuarioActual.rol) : []);
+
+    /**
+     * Guarda los módulos de cada rol distinto del administrador.
+     * permisos: { contador: ['ventas', ...], vendedor: [...] }
+     */
+    const guardarPermisos = (permisos) => {
+        if (!usuarioActual || usuarioActual.rol !== 'administrador') {
+            return { ok: false, error: 'Solo el administrador puede cambiar los permisos.' };
+        }
+        const todos = PERMISOS.administrador;
+        const limpio = {};
+        for (const rol of Object.keys(ROLES).filter((r) => r !== 'administrador')) {
+            const lista = Array.isArray(permisos[rol]) ? permisos[rol] : [];
+            const modulos = todos.filter((clave) => lista.includes(clave) && !SOLO_ADMINISTRADOR.includes(clave));
+            if (modulos.length === 0) {
+                return { ok: false, error: `El rol ${ROLES[rol].etiqueta} debe tener al menos un módulo.` };
+            }
+            limpio[rol] = modulos;
+        }
+        ERP.db.updateConfig({ permisosRol: limpio });
+        return { ok: true, permisos: limpio };
+    };
 
     const usuario = () => usuarioActual;
 
@@ -128,8 +172,8 @@ ERP.auth = (() => {
     };
 
     return {
-        ROLES, PERMISOS,
+        ROLES, PERMISOS, SOLO_ADMINISTRADOR,
         iniciarSesion, cerrarSesion, restaurarSesion, sincronizarSesion,
-        usuario, puede, modulosPermitidos, etiquetaRol
+        usuario, puede, modulosPermitidos, modulosDeRol, guardarPermisos, etiquetaRol
     };
 })();

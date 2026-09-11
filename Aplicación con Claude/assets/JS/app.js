@@ -20,8 +20,10 @@ ERP.configuracion = (() => {
      * de que se le quitara el rol de administrador a esta sesión (aquí o en otra pestaña).
      */
     const autorizado = () => {
-        if (ERP.auth.sincronizarSesion() && ERP.auth.puede('configuracion')) return true;
-        ui.toastError('Sin permiso', 'Solo el administrador puede usar Configuración.');
+        const sesion = ERP.auth.sincronizarSesion();
+        if (sesion && ERP.auth.puede('configuracion')) return true;
+        if (!sesion) ui.toastWarn('Sesión cerrada', 'Su usuario ya no existe o fue desactivado. Ingrese de nuevo.');
+        // El montaje abre el primer módulo permitido y explica el cambio de acceso.
         ERP.app.refrescar();
         return false;
     };
@@ -44,8 +46,8 @@ ERP.configuracion = (() => {
         const descripcionRol = el('span', { class: 'hint' });
         const actualizarDescripcion = () => {
             const rol = ERP.auth.ROLES[campos.rol.value];
-            const modulos = (ERP.auth.PERMISOS[campos.rol.value] || []).length;
-            descripcionRol.textContent = rol ? `${rol.descripcion} ${modulos} módulos.` : '';
+            const modulos = ERP.auth.modulosDeRol(campos.rol.value).length;
+            descripcionRol.textContent = rol ? `${rol.descripcion} Ve ${modulos} módulos, según Permisos por rol.` : '';
         };
         campos.rol.addEventListener('change', actualizarDescripcion);
         actualizarDescripcion();
@@ -124,16 +126,98 @@ ERP.configuracion = (() => {
                 `${res.usuario.nombre} (${res.usuario.usuario})${res.claveCambiada ? ' · contraseña cambiada' : ''}.`);
 
             if (esPropio) {
-                const sesion = ERP.auth.sincronizarSesion();
-                if (sesion && !ERP.auth.puede('configuracion')) {
-                    ui.toastInfo('Su acceso cambió', `Ahora su rol es ${ERP.auth.etiquetaRol(sesion.rol)}: Configuración ya no está disponible.`);
-                    ERP.app.irA('dashboard');
-                }
+                // Si el nuevo rol ya no incluye Configuración, el montaje lo lleva a un módulo permitido.
+                ERP.auth.sincronizarSesion();
+                ERP.app.refrescar();
             }
         };
 
         formulario.addEventListener('submit', enviar);
         btnGuardar.addEventListener('click', enviar);
+    };
+
+    /* ---------- Permisos por rol ---------- */
+
+    const tarjetaPermisos = () => {
+        const { MODULOS, GRUPOS } = ERP.app;
+        const roles = Object.keys(ERP.auth.ROLES);
+        const delegables = roles.filter((rol) => rol !== 'administrador');
+        const claves = GRUPOS.flatMap((grupo) => Object.keys(MODULOS).filter((clave) => MODULOS[clave].grupo === grupo));
+
+        // casillas[rol][modulo]: solo las editables; administrador y Configuración van fijas.
+        const casillas = {};
+        const errores = el('div');
+        const resumen = el('p', { class: 'text-muted' });
+
+        const seleccion = () => Object.fromEntries(delegables.map((rol) => [rol,
+            Object.keys(casillas[rol] || {}).filter((clave) => casillas[rol][clave].checked)]));
+
+        const actualizarResumen = () => {
+            const actual = seleccion();
+            resumen.textContent = delegables
+                .map((rol) => `${ERP.auth.etiquetaRol(rol)}: ${actual[rol].length} módulos`)
+                .join(' · ');
+        };
+
+        const filas = claves.map((clave) => {
+            const soloAdmin = ERP.auth.SOLO_ADMINISTRADOR.includes(clave);
+            return el('tr', {}, [
+                el('td', {}, [
+                    el('span', { class: 'strong', text: MODULOS[clave].etiqueta }),
+                    soloAdmin ? el('span', { class: 'hint', text: ' · Solo administrador' }) : null
+                ]),
+                ...roles.map((rol) => {
+                    const fija = rol === 'administrador' || soloAdmin;
+                    const casilla = el('input', {
+                        attrs: { type: 'checkbox', 'aria-label': `${MODULOS[clave].etiqueta} para ${ERP.auth.etiquetaRol(rol)}` },
+                        props: { checked: ERP.auth.modulosDeRol(rol).includes(clave), disabled: fija }
+                    });
+                    if (!fija) {
+                        casillas[rol] = casillas[rol] || {};
+                        casillas[rol][clave] = casilla;
+                        casilla.addEventListener('change', actualizarResumen);
+                    }
+                    return el('td', { class: rol === 'administrador' ? 'col-rol col-admin' : 'col-rol' }, [casilla]);
+                })
+            ]);
+        });
+
+        const btnGuardar = el('button', {
+            class: 'btn', text: 'Guardar permisos', attrs: { type: 'button' },
+            on: {
+                click: () => {
+                    if (!autorizado()) return;
+                    U.clear(errores);
+                    const res = ERP.auth.guardarPermisos(seleccion());
+                    if (!res.ok) {
+                        errores.appendChild(ui.banner('No se guardaron los permisos', res.error, 'danger'));
+                        return;
+                    }
+                    ui.toastOk('Permisos guardados', `${delegables
+                        .map((rol) => `${ERP.auth.etiquetaRol(rol)}: ${res.permisos[rol].length} módulos`)
+                        .join(' · ')}. Las sesiones abiertas se actualizan al instante.`);
+                }
+            }
+        });
+
+        actualizarResumen();
+
+        return ui.card('Permisos por rol', el('div', { class: 'stack' }, [
+            errores,
+            el('div', { class: 'table-wrap' }, [
+                el('table', { class: 'data permisos-rol' }, [
+                    el('thead', {}, [el('tr', {}, [
+                        el('th', { text: 'Módulo', attrs: { scope: 'col' } }),
+                        ...roles.map((rol) => el('th', { class: rol === 'administrador' ? 'col-rol col-admin' : 'col-rol', text: ERP.auth.etiquetaRol(rol), attrs: { scope: 'col' } }))
+                    ])]),
+                    el('tbody', {}, filas)
+                ])
+            ]),
+            resumen,
+            el('div', { class: 'row row-wrap' }, [btnGuardar])
+        ]), {
+            subtitulo: 'Marque qué módulos ve cada rol. El administrador los ve todos y Configuración es solo suya.'
+        });
     };
 
     const vista = (contenedor) => {
@@ -279,7 +363,7 @@ ERP.configuracion = (() => {
                             ])]),
                             el('td', { text: u.nombre }),
                             el('td', {}, [ui.badge(ERP.auth.etiquetaRol(u.rol), 'info')]),
-                            el('td', { class: 'num', text: U.num((ERP.auth.PERMISOS[u.rol] || []).length) }),
+                            el('td', { class: 'num', text: U.num(ERP.auth.modulosDeRol(u.rol).length) }),
                             el('td', { class: 'text-right' }, [el('button', {
                                 class: 'btn btn-ghost btn-sm', text: 'Editar',
                                 attrs: { type: 'button', 'aria-label': `Editar el usuario ${u.usuario}` },
@@ -296,6 +380,8 @@ ERP.configuracion = (() => {
                     text: 'La autenticación local separa responsabilidades dentro de la aplicación, pero no es un control de seguridad. Al conectar Supabase debe delegarse en Supabase Auth con Row Level Security.'
                 })
             }),
+
+            tarjetaPermisos(),
 
             ui.card('Datos y respaldo', el('div', { class: 'stack' }, [
                 el('p', {
@@ -343,7 +429,8 @@ ERP.app = (() => {
     const GRUPOS = ['Operación', 'Terceros', 'Análisis', 'Administración'];
 
     const estado = {
-        vista: 'dashboard',
+        // null = elegir al montar el primer módulo permitido para el rol.
+        vista: null,
         colapsado: false,
         cajonAbierto: false
     };
@@ -400,6 +487,7 @@ ERP.app = (() => {
                 clave.focus();
                 return;
             }
+            estado.vista = null;
             montarAplicacion();
             ui.toastOk(`Bienvenida, ${res.usuario.nombre}`, ERP.auth.etiquetaRol(res.usuario.rol));
         });
@@ -524,6 +612,7 @@ ERP.app = (() => {
                     });
                     if (ok) {
                         ERP.auth.cerrarSesion();
+                        estado.vista = null;
                         pantallaAcceso();
                     }
                 }
@@ -566,6 +655,14 @@ ERP.app = (() => {
         }
     };
 
+    /** Tablero si el rol lo tiene; si no, el primer módulo permitido en el orden del menú. */
+    const primerModuloPermitido = () => {
+        const permitidos = ERP.auth.modulosPermitidos();
+        if (permitidos.includes('dashboard')) return 'dashboard';
+        const enMenu = GRUPOS.flatMap((grupo) => Object.keys(MODULOS).filter((clave) => MODULOS[clave].grupo === grupo));
+        return enMenu.find((clave) => permitidos.includes(clave)) || null;
+    };
+
     const irA = (clave) => {
         if (!ERP.auth.puede(clave)) {
             ui.toastError('Sin permiso', 'Su rol no tiene acceso a este módulo.');
@@ -602,16 +699,19 @@ ERP.app = (() => {
         const rolAnterior = ERP.auth.usuario() ? ERP.auth.usuario().rol : null;
         const sesion = ERP.auth.sincronizarSesion();
         if (!sesion) {
+            estado.vista = null;
             pantallaAcceso();
             if (rolAnterior) ui.toastWarn('Sesión cerrada', 'Su usuario ya no existe o fue desactivado. Ingrese de nuevo.');
             return;
         }
-        if (!ERP.auth.puede(estado.vista)) {
+        if (!estado.vista || !ERP.auth.puede(estado.vista)) {
+            // Perder la vista con la sesión abierta es un cambio de rol o de permisos: se avisa.
+            // Al entrar (vista vacía) se abre el primer módulo permitido sin aviso.
             const anterior = MODULOS[estado.vista];
-            estado.vista = 'dashboard';
-            if (anterior && rolAnterior && rolAnterior !== sesion.rol) {
+            estado.vista = primerModuloPermitido();
+            if (anterior) {
                 ui.toastInfo('Su acceso cambió',
-                    `Ahora su rol es ${ERP.auth.etiquetaRol(sesion.rol)}: ${anterior.etiqueta} ya no está disponible.`);
+                    `${anterior.etiqueta} ya no está disponible para el rol ${ERP.auth.etiquetaRol(sesion.rol)}.`);
             }
         }
 
@@ -689,7 +789,7 @@ ERP.app = (() => {
         }
     };
 
-    return { iniciar, irA, refrescar: montarAplicacion, MODULOS, estado };
+    return { iniciar, irA, refrescar: montarAplicacion, MODULOS, GRUPOS, estado };
 })();
 
 document.addEventListener('DOMContentLoaded', ERP.app.iniciar);
