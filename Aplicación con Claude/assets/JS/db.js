@@ -1017,9 +1017,11 @@ ERP.db = (() => {
         const cfg = data.config;
 
         data.usuarios = [
-            { id: 'usr_admin', usuario: 'admin', clave: hashClave('admin123'), nombre: 'Laura Restrepo', rol: 'administrador', activo: true },
-            { id: 'usr_conta', usuario: 'contador', clave: hashClave('conta123'), nombre: 'Julián Ospina', rol: 'contador', activo: true },
-            { id: 'usr_vende', usuario: 'vendedor', clave: hashClave('venta123'), nombre: 'Marcela Gómez', rol: 'vendedor', activo: true }
+            // Contraseñas iniciales guardadas solo como hash, para no publicarlas en el
+            // código. El administrador las entrega y debe cambiarlas en Configuración.
+            { id: 'usr_admin', usuario: 'admin', clave: 'h1a4lh3u', nombre: 'Laura Restrepo', rol: 'administrador', activo: true },
+            { id: 'usr_conta', usuario: 'contador', clave: 'h13oiwci', nombre: 'Julián Ospina', rol: 'contador', activo: true },
+            { id: 'usr_vende', usuario: 'vendedor', clave: 'hn08tfh', nombre: 'Marcela Gómez', rol: 'vendedor', activo: true }
         ];
 
         const clientesSemilla = [

@@ -16,17 +16,19 @@ Si el navegador bloquea el almacenamiento local en `file://`, la aplicación lo 
 python -m http.server 8000
 ```
 
-### Usuarios de demostración
+### Usuarios y roles
 
-| Usuario | Contraseña | Rol | Acceso |
-| --- | --- | --- | --- |
-| `admin` | `admin123` | Administrador | Todos los módulos |
-| `contador` | `conta123` | Contador | Todo excepto configuración |
-| `vendedor` | `venta123` | Vendedor | Ventas, clientes, cartera e inventario |
+| Rol | Acceso |
+| --- | --- |
+| Administrador | Todos los módulos |
+| Contador | Todo excepto configuración |
+| Vendedor | Ventas, clientes, cartera e inventario |
+
+La pantalla de acceso no muestra usuarios ni contraseñas, y el código no contiene las contraseñas iniciales en texto plano: guarda solo su hash. Quien administra el sistema las entrega y debe cambiarlas en **Configuración → Usuarios del sistema**.
 
 **Configuración es exclusiva del Administrador.** No aparece en el menú de los demás roles, no se puede abrir por otra vía y cada acción (guardar, editar usuarios, exportar, reiniciar) vuelve a comprobar el rol. Si el administrador le cambia el rol a alguien con la sesión abierta, su menú se ajusta sin recargar, también en otras pestañas del mismo navegador.
 
-> Son credenciales de demostración, visibles a propósito en la pantalla de acceso. El administrador puede cambiar usuario, nombre, rol y contraseña de cada uno en **Configuración → Usuarios del sistema**; en cuanto una credencial deja de ser la de demostración, la pantalla de acceso deja de mostrarla. La autenticación local **separa responsabilidades dentro de la aplicación; no es un control de seguridad**. Cámbialas antes de usar el sistema con información real.
+> Los usuarios, contraseñas y datos viven en el `localStorage` **de cada navegador**. Un cambio hecho en un equipo —o en `localhost`— no aparece en otro navegador ni en el despliegue de Vercel, que arranca con los usuarios iniciales; hay que cambiar las contraseñas en cada navegador donde se use. La autenticación local **separa responsabilidades dentro de la aplicación; no es un control de seguridad**: para uso real con varios equipos hace falta un backend con autenticación (por ejemplo, Supabase).
 
 ---
 

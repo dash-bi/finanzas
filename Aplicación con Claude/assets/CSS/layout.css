@@ -64,29 +64,6 @@
 
 .login-card .btn { width: 100%; padding: 15px 22px; font-size: 0.95rem; }
 
-.login-hint {
-    margin-top: var(--sp-5);
-    padding-top: var(--sp-4);
-    border-top: 1.5px dashed var(--border-strong);
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-.login-hint > p { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; color: var(--text-soft); text-transform: uppercase; }
-.login-hint ul { display: grid; gap: 7px; margin-top: var(--sp-3); }
-
-.login-hint li {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-2);
-    background: var(--surface-2);
-    border-radius: var(--r-md);
-    padding: 9px 13px;
-}
-
-.login-hint code { font-family: var(--font-mono); color: var(--text); font-weight: 700; font-size: 0.78rem; }
-.login-hint li > span { margin-left: auto; font-size: 0.72rem; font-weight: 600; }
-
 /* ---------- Estructura principal ---------- */
 
 .app-shell {

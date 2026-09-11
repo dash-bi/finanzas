@@ -376,7 +376,7 @@ ERP.app = (() => {
     const pantallaAcceso = () => {
         U.clear(raiz);
 
-        const usuario = ui.input({ placeholder: 'admin', autocomplete: 'username' });
+        const usuario = ui.input({ autocomplete: 'username' });
         const clave = ui.input({ tipo: 'password', placeholder: '••••••••', autocomplete: 'current-password' });
         const errores = el('div');
 
@@ -404,21 +404,8 @@ ERP.app = (() => {
             ui.toastOk(`Bienvenida, ${res.usuario.nombre}`, ERP.auth.etiquetaRol(res.usuario.rol));
         });
 
-        // Solo se muestran las credenciales de demostración que siguen vigentes: si el
-        // administrador cambia un usuario o su contraseña, esa pista desaparece.
-        const registros = ERP.db.all('usuarios');
-        const demostracion = [['admin', 'admin123'], ['contador', 'conta123'], ['vendedor', 'venta123']]
-            .map(([u, c]) => ({ u, c, registro: registros.find((r) => r.usuario === u && r.clave === ERP.db.hashClave(c) && r.activo !== false) }))
-            .filter((d) => d.registro);
-
-        const credenciales = demostracion.length ? el('div', { class: 'login-hint' }, [
-            el('p', { class: 'strong', text: 'Usuarios de demostración' }),
-            el('ul', {}, demostracion.map((d) => el('li', {}, [
-                el('code', { text: `${d.u} / ${d.c}` }),
-                el('span', { text: ` — ${ERP.auth.etiquetaRol(d.registro.rol)}` })
-            ])))
-        ]) : null;
-
+        // La pantalla de acceso no muestra usuarios ni contraseñas: la app es pública
+        // y quien administra el sistema entrega las credenciales.
         raiz.appendChild(el('div', { class: 'login-screen' }, [
             el('main', { class: 'login-card' }, [
                 el('div', { class: 'login-brand' }, [
@@ -428,8 +415,7 @@ ERP.app = (() => {
                         el('p', { text: ERP.db.config().empresa })
                     ])
                 ]),
-                formulario,
-                credenciales
+                formulario
             ])
         ]));
 
