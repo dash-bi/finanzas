@@ -1,0 +1,368 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <style>
+    body { margin: 0; font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; background: #F5F3FA; }
+    * { box-sizing: border-box; }
+    a { color: #7B2FF7; text-decoration: none; }
+    a:hover { color: #4B0FA8; }
+    .num { font-variant-numeric: tabular-nums; }
+    .disp { font-family: "Outfit", "Segoe UI", system-ui, sans-serif; letter-spacing: -0.02em; }
+  </style>
+</helmet>
+
+<div style="display: flex; width: 1440px; height: 980px; overflow: hidden; background: #F5F3FA; color: #16062B;">
+
+  <!-- ======================= BARRA LATERAL ======================= -->
+  <aside style="width: 260px; flex: 0 0 260px; background: linear-gradient(168deg, #240C46 0%, #170729 62%, #12061F 100%); display: flex; flex-direction: column; padding: 22px 16px 16px;">
+
+    <div style="display: flex; align-items: center; gap: 11px; padding: 0 8px 24px;">
+      <div style="width: 38px; height: 38px; border-radius: 13px; background: {{acento}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#12061F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V11"/><path d="M10 19V6"/><path d="M16 19v-5"/><path d="M22 19V4"/></svg>
+      </div>
+      <div>
+        <div class="disp" style="font-size: 16px; font-weight: 700; color: #FFFFFF; line-height: 1.1;">Andina</div>
+        <div style="font-size: 11px; color: #9C8EC4; font-weight: 500;">Finanzas</div>
+      </div>
+    </div>
+
+    <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.12em; color: #6F5F9B; padding: 0 12px 8px;">OPERACIÓN</div>
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; background: {{acento}}; color: #12061F;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
+        <span style="font-size: 14px; font-weight: 700;">Tablero</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M6 6v13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6"/><path d="M9 10h6"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Ventas</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span style="font-size: 14px; font-weight: 500; flex: 1;">Cartera</span>
+        <span class="num" style="font-size: 11px; font-weight: 800; background: #FF4D6D; color: #FFFFFF; border-radius: 999px; padding: 2px 8px;">16</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v13"/><path d="m6 12 6 6 6-6"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Compras</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 12l9 9 9-9z"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Gastos</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 9v12"/></svg>
+        <span style="font-size: 14px; font-weight: 500; flex: 1;">Inventario</span>
+        <span class="num" style="font-size: 11px; font-weight: 800; background: #FFB020; color: #2B1600; border-radius: 999px; padding: 2px 8px;">7</span>
+      </div>
+    </div>
+
+    <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.12em; color: #6F5F9B; padding: 22px 12px 8px;">ANÁLISIS</div>
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M6 16V9"/><path d="M11 16V5"/><path d="M16 16v-4"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Estados financieros</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 20 6"/><path d="M4 6l16 12"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Punto de equilibrio</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Préstamos</span>
+      </div>
+    </div>
+
+    <div style="margin-top: auto; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.09); border-radius: 20px; padding: 16px;">
+      <div style="font-size: 11px; color: #9C8EC4; font-weight: 600; margin-bottom: 4px;">Saldo en caja</div>
+      <div class="disp num" style="font-size: 22px; font-weight: 700; color: #FFFFFF;">$ 102.718.582</div>
+      <div style="display: flex; align-items: center; gap: 5px; margin-top: 7px;">
+        <span style="display: inline-flex; align-items: center; gap: 3px; background: {{acento}}; color: #12061F; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 3px 9px;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"/></svg>
+          6,4 %
+        </span>
+        <span style="font-size: 11px; color: #9C8EC4;">vs. mes anterior</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ======================= ÁREA PRINCIPAL ======================= -->
+  <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+
+    <!-- Barra superior -->
+    <header style="height: 76px; flex: 0 0 76px; background: #FFFFFF; display: flex; align-items: center; gap: 16px; padding: 0 28px; border-bottom: 1px solid #EDE8F7;">
+      <div style="display: flex; align-items: center; gap: 9px; background: #F5F3FA; border-radius: 999px; padding: 9px 16px 9px 13px; width: 300px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E82AC" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span style="font-size: 13px; color: #8E82AC; font-weight: 500;">Buscar factura, cliente…</span>
+      </div>
+
+      <div style="flex: 1;"></div>
+
+      <div style="display: flex; align-items: center; gap: 8px; background: #F5F3FA; border-radius: 999px; padding: 8px 15px;">
+        <span style="width: 7px; height: 7px; border-radius: 999px; background: #12C48B;"></span>
+        <span style="font-size: 12px; font-weight: 600; color: #4B4266;">9 sep 2026</span>
+      </div>
+
+      <div style="width: 40px; height: 40px; border-radius: 999px; background: #F5F3FA; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4B4266" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; padding-left: 6px;">
+        <div style="width: 40px; height: 40px; border-radius: 999px; background: {{primario}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; border: 2.5px solid {{acento}};">LR</div>
+        <div>
+          <div style="font-size: 13px; font-weight: 700; line-height: 1.15;">Laura Restrepo</div>
+          <div style="font-size: 11px; color: #8E82AC; line-height: 1.15;">Administradora</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido -->
+    <main style="flex: 1; overflow: hidden; padding: 26px 28px;">
+
+      <!-- Encabezado de vista -->
+      <div style="display: flex; align-items: flex-end; gap: 16px; margin-bottom: 20px;">
+        <div style="flex: 1;">
+          <h1 class="disp" style="margin: 0; font-size: 30px; font-weight: 700; line-height: 1.1;">Hola, Laura 👋</h1>
+          <p style="margin: 5px 0 0; font-size: 14px; color: #6E6486; font-weight: 500;">Así va tu negocio en septiembre.</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button style="border: 0; cursor: pointer; background: #FFFFFF; color: #16062B; font-family: inherit; font-size: 13.5px; font-weight: 700; border-radius: 999px; padding: 12px 20px; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 2px rgba(22,6,43,0.07);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+            Exportar
+          </button>
+          <button style="border: 0; cursor: pointer; background: {{primario}}; color: #FFFFFF; font-family: inherit; font-size: 13.5px; font-weight: 700; border-radius: 999px; padding: 12px 22px; display: flex; align-items: center; gap: 8px; box-shadow: 0 6px 18px rgba(123,47,247,0.32);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Nueva venta
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div style="display: flex; align-items: center; gap: 10px; background: #FFFFFF; border-radius: 22px; padding: 12px 14px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 8px; background: {{primario}}; color: #FFFFFF; border-radius: 999px; padding: 9px 16px; font-size: 13px; font-weight: 700;">
+          Mes actual
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; background: #F5F3FA; color: #4B4266; border-radius: 999px; padding: 9px 16px; font-size: 13px; font-weight: 600;">
+          Todas las categorías
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; background: #F5F3FA; color: #4B4266; border-radius: 999px; padding: 9px 16px; font-size: 13px; font-weight: 600;">
+          Todos los productos
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div style="flex: 1;"></div>
+        <span style="font-size: 12px; color: #8E82AC; font-weight: 600;">11 facturas · 01–09 sep</span>
+        <button style="border: 0; cursor: pointer; background: transparent; color: {{primario}}; font-family: inherit; font-size: 13px; font-weight: 700; padding: 8px 12px;">Limpiar</button>
+      </div>
+
+      <!-- KPIs -->
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px;">
+
+        <!-- KPI destacado -->
+        <article style="background: linear-gradient(150deg, #2C1052 0%, #170729 100%); border-radius: 24px; padding: 18px 20px; color: #FFFFFF; position: relative; overflow: hidden;">
+          <div style="position: absolute; right: -28px; top: -28px; width: 110px; height: 110px; border-radius: 999px; background: {{primario}}; opacity: 0.34;"></div>
+          <div style="position: relative; display: flex; align-items: center; gap: 9px;">
+            <div style="width: 30px; height: 30px; border-radius: 10px; background: {{acento}}; display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#12061F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 10 12l4 4 6-8"/></svg>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #C7B9EA;">INGRESOS TOTALES</span>
+          </div>
+          <div class="disp num" style="position: relative; font-size: 27px; font-weight: 700; margin-top: 13px;">$ 19.564.810</div>
+          <div style="position: relative; display: flex; align-items: center; gap: 7px; margin-top: 9px;">
+            <span style="background: {{acento}}; color: #12061F; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 3px 9px;">+12,8 %</span>
+            <span style="font-size: 11.5px; color: #A99AD1;">44 unidades</span>
+          </div>
+        </article>
+
+        <article style="background: #FFFFFF; border-radius: 24px; padding: 18px 20px;">
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <div style="width: 30px; height: 30px; border-radius: 10px; background: #FFE9EE; display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF4D6D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 14 12l-4-4-6 8"/></svg>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #8E82AC;">COSTO DE VENTAS</span>
+          </div>
+          <div class="disp num" style="font-size: 27px; font-weight: 700; margin-top: 13px;">$ 11.477.125</div>
+          <div style="font-size: 11.5px; color: #8E82AC; margin-top: 9px; font-weight: 500;">Costo congelado en cada venta</div>
+        </article>
+
+        <article style="background: #FFFFFF; border-radius: 24px; padding: 18px 20px;">
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <div style="width: 30px; height: 30px; border-radius: 10px; background: #E4FBF2; display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#12C48B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M17 8a4 4 0 0 0-4-3h-2a3 3 0 0 0 0 6h2a3 3 0 0 1 0 6h-2a4 4 0 0 1-4-3"/></svg>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #8E82AC;">UTILIDAD BRUTA</span>
+          </div>
+          <div class="disp num" style="font-size: 27px; font-weight: 700; margin-top: 13px;">$ 8.087.685</div>
+          <div style="display: flex; align-items: center; gap: 7px; margin-top: 9px;">
+            <span style="background: #E4FBF2; color: #0B8C63; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 3px 9px;">41,3 % margen</span>
+          </div>
+        </article>
+
+        <article style="background: #FFFFFF; border-radius: 24px; padding: 18px 20px;">
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <div style="width: 30px; height: 30px; border-radius: 10px; background: #FFF3DC; display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D9880A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 7 4-14 3 7h4"/></svg>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #8E82AC;">GASTOS OPERATIVOS</span>
+          </div>
+          <div class="disp num" style="font-size: 27px; font-weight: 700; margin-top: 13px;">$ 17.578.682</div>
+          <div style="font-size: 11.5px; color: #8E82AC; margin-top: 9px; font-weight: 500;">5 registros del periodo</div>
+        </article>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px;">
+        <article style="background: #FFFFFF; border-radius: 24px; padding: 16px 20px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 42px; height: 42px; border-radius: 14px; background: #F0E7FF; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{primario}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v11H3z"/><path d="M3 11h18"/></svg>
+          </div>
+          <div style="min-width: 0;">
+            <div style="font-size: 11px; font-weight: 700; color: #8E82AC; letter-spacing: 0.04em;">CUENTAS POR COBRAR</div>
+            <div class="disp num" style="font-size: 20px; font-weight: 700; margin-top: 2px;">$ 23.501.759</div>
+          </div>
+        </article>
+
+        <article style="background: #FFFFFF; border-radius: 24px; padding: 16px 20px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 42px; height: 42px; border-radius: 14px; background: #EAF6FF; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2C8FD8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12v9"/><path d="m4 7.5 8 4.5 8-4.5"/></svg>
+          </div>
+          <div style="min-width: 0;">
+            <div style="font-size: 11px; font-weight: 700; color: #8E82AC; letter-spacing: 0.04em;">INVENTARIO</div>
+            <div class="disp num" style="font-size: 20px; font-weight: 700; margin-top: 2px;">$ 41.940.516</div>
+          </div>
+        </article>
+
+        <article style="background: #FFFFFF; border-radius: 24px; padding: 16px 20px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 42px; height: 42px; border-radius: 14px; background: #F3FFD6; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6E9200" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/></svg>
+          </div>
+          <div style="min-width: 0;">
+            <div style="font-size: 11px; font-weight: 700; color: #8E82AC; letter-spacing: 0.04em;">TICKET PROMEDIO</div>
+            <div class="disp num" style="font-size: 20px; font-weight: 700; margin-top: 2px;">$ 1.778.619</div>
+          </div>
+        </article>
+
+        <article style="background: #FFE9EE; border-radius: 24px; padding: 16px 20px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 42px; height: 42px; border-radius: 14px; background: #FF4D6D; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div style="min-width: 0;">
+            <div style="font-size: 11px; font-weight: 700; color: #A32B45; letter-spacing: 0.04em;">CARTERA VENCIDA</div>
+            <div class="disp num" style="font-size: 20px; font-weight: 700; margin-top: 2px; color: #8E1B33;">$ 16.046.861</div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Gráficos -->
+      <div style="display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr); gap: 14px;">
+
+        <section style="background: #FFFFFF; border-radius: 26px; padding: 20px 22px;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+            <div style="flex: 1;">
+              <h2 class="disp" style="margin: 0; font-size: 16px; font-weight: 700;">Ventas contra gastos</h2>
+              <p style="margin: 2px 0 0; font-size: 12px; color: #8E82AC; font-weight: 500;">Agrupación diaria · septiembre</p>
+            </div>
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #4B4266;"><span style="width: 9px; height: 9px; border-radius: 3px; background: {{primario}};"></span>Ventas</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #4B4266;"><span style="width: 9px; height: 9px; border-radius: 3px; background: {{acento}};"></span>Gastos</span>
+          </div>
+
+          <svg viewBox="0 0 620 190" style="width: 100%; height: auto; display: block; overflow: visible;">
+            <defs>
+              <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="{{primario}}" stop-opacity="0.26"/>
+                <stop offset="100%" stop-color="{{primario}}" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line x1="40" y1="20" x2="612" y2="20" stroke="#EFEBF8" stroke-width="1"/>
+            <line x1="40" y1="60" x2="612" y2="60" stroke="#EFEBF8" stroke-width="1"/>
+            <line x1="40" y1="100" x2="612" y2="100" stroke="#EFEBF8" stroke-width="1"/>
+            <line x1="40" y1="140" x2="612" y2="140" stroke="#EFEBF8" stroke-width="1"/>
+            <line x1="40" y1="160" x2="612" y2="160" stroke="#DFD8F0" stroke-width="1.4"/>
+            <text x="32" y="24" text-anchor="end" font-size="10" fill="#A79BC4" font-family="Plus Jakarta Sans">20 M</text>
+            <text x="32" y="64" text-anchor="end" font-size="10" fill="#A79BC4" font-family="Plus Jakarta Sans">15 M</text>
+            <text x="32" y="104" text-anchor="end" font-size="10" fill="#A79BC4" font-family="Plus Jakarta Sans">10 M</text>
+            <text x="32" y="144" text-anchor="end" font-size="10" fill="#A79BC4" font-family="Plus Jakarta Sans">5 M</text>
+
+            <path d="M40 160 L112 132 L184 96 L256 148 L328 152 L400 158 L472 120 L544 134 L612 40 L612 160 Z" fill="url(#gv)"/>
+            <polyline points="40,160 112,132 184,96 256,148 328,152 400,158 472,120 544,134 612,40" fill="none" stroke="{{primario}}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="40,158 112,150 184,157 256,159 328,86 400,155 472,152 544,124 612,116" fill="none" stroke="{{acento}}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+            <circle cx="612" cy="40" r="6" fill="{{primario}}" stroke="#FFFFFF" stroke-width="3"/>
+            <circle cx="328" cy="86" r="5.5" fill="{{acento}}" stroke="#FFFFFF" stroke-width="3"/>
+
+            <text x="40" y="180" text-anchor="middle" font-size="10.5" fill="#A79BC4" font-family="Plus Jakarta Sans">01 sep</text>
+            <text x="184" y="180" text-anchor="middle" font-size="10.5" fill="#A79BC4" font-family="Plus Jakarta Sans">03 sep</text>
+            <text x="328" y="180" text-anchor="middle" font-size="10.5" fill="#A79BC4" font-family="Plus Jakarta Sans">05 sep</text>
+            <text x="472" y="180" text-anchor="middle" font-size="10.5" fill="#A79BC4" font-family="Plus Jakarta Sans">07 sep</text>
+            <text x="612" y="180" text-anchor="middle" font-size="10.5" fill="#A79BC4" font-family="Plus Jakarta Sans">09 sep</text>
+          </svg>
+        </section>
+
+        <section style="background: #FFFFFF; border-radius: 26px; padding: 20px 22px;">
+          <h2 class="disp" style="margin: 0; font-size: 16px; font-weight: 700;">Gastos del mes</h2>
+          <p style="margin: 2px 0 12px; font-size: 12px; color: #8E82AC; font-weight: 500;">Participación por categoría</p>
+
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <svg viewBox="0 0 120 120" style="width: 118px; height: 118px; flex: 0 0 118px;">
+              <circle cx="60" cy="60" r="46" fill="none" stroke="{{primario}}" stroke-width="20" stroke-dasharray="196 93" transform="rotate(-90 60 60)"/>
+              <circle cx="60" cy="60" r="46" fill="none" stroke="{{acento}}" stroke-width="20" stroke-dasharray="53 236" transform="rotate(151 60 60)"/>
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#12C48B" stroke-width="20" stroke-dasharray="24 265" transform="rotate(217 60 60)"/>
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#FFB020" stroke-width="20" stroke-dasharray="16 273" transform="rotate(247 60 60)"/>
+              <text x="60" y="56" text-anchor="middle" font-size="9.5" fill="#8E82AC" font-family="Plus Jakarta Sans" font-weight="600">Total</text>
+              <text x="60" y="70" text-anchor="middle" font-size="12.5" fill="#16062B" font-family="Outfit" font-weight="700">17,5 M</text>
+            </svg>
+
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 9px; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 9px; height: 9px; border-radius: 3px; background: {{primario}}; flex: 0 0 auto;"></span>
+                <span style="font-size: 12px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Nómina</span>
+                <span class="num" style="font-size: 12px; font-weight: 800;">67,6 %</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 9px; height: 9px; border-radius: 3px; background: {{acento}}; flex: 0 0 auto;"></span>
+                <span style="font-size: 12px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Arrendamiento</span>
+                <span class="num" style="font-size: 12px; font-weight: 800;">25,6 %</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 9px; height: 9px; border-radius: 3px; background: #12C48B; flex: 0 0 auto;"></span>
+                <span style="font-size: 12px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Servicios públicos</span>
+                <span class="num" style="font-size: 12px; font-weight: 800;">4,2 %</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 9px; height: 9px; border-radius: 3px; background: #FFB020; flex: 0 0 auto;"></span>
+                <span style="font-size: 12px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Seguros</span>
+                <span class="num" style="font-size: 12px; font-weight: 800;">1,8 %</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"primario":{"editor":"color","default":"#7B2FF7","options":["#7B2FF7","#820AD1","#5B4BFF","#9A4DFF"],"section":"Paleta"},"acento":{"editor":"color","default":"#C9F73F","options":["#C9F73F","#B8F32C","#7DF7A8","#00E38C"],"section":"Paleta"},"$preview":{"width":1440,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      primario: this.props.primario ?? '#7B2FF7',
+      acento: this.props.acento ?? '#C9F73F'
+    };
+  }
+}
+</script>
+</body>
+</html>

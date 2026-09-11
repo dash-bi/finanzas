@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <style>
+    body { margin: 0; font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; background: #F5F3FA; }
+    * { box-sizing: border-box; }
+    a { color: #7B2FF7; text-decoration: none; }
+    a:hover { color: #4B0FA8; }
+    .disp { font-family: "Outfit", "Segoe UI", system-ui, sans-serif; letter-spacing: -0.025em; }
+    .num { font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1000px; height: 760px; overflow: hidden; background: #F5F3FA; padding: 26px; display: flex;">
+  <div style="flex: 1; display: flex; border-radius: 32px; overflow: hidden; background: #FFFFFF; box-shadow: 0 24px 60px rgba(22,6,43,0.10);">
+
+    <!-- Panel de marca -->
+    <div style="width: 430px; flex: 0 0 430px; background: linear-gradient(158deg, #3A1370 0%, #200A3D 55%, #150626 100%); padding: 40px 38px; display: flex; flex-direction: column; position: relative; overflow: hidden;">
+
+      <div style="position: absolute; right: -90px; top: -60px; width: 260px; height: 260px; border-radius: 999px; background: {{primario}}; opacity: 0.36;"></div>
+      <div style="position: absolute; left: -70px; bottom: 90px; width: 190px; height: 190px; border-radius: 999px; background: {{acento}}; opacity: 0.16;"></div>
+
+      <div style="position: relative; display: flex; align-items: center; gap: 12px;">
+        <div style="width: 42px; height: 42px; border-radius: 14px; background: {{acento}}; display: flex; align-items: center; justify-content: center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#12061F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V11"/><path d="M10 19V6"/><path d="M16 19v-5"/><path d="M22 19V4"/></svg>
+        </div>
+        <div>
+          <div class="disp" style="font-size: 18px; font-weight: 700; color: #FFFFFF; line-height: 1.1;">Andina</div>
+          <div style="font-size: 12px; color: #A99AD1; font-weight: 500;">Finanzas</div>
+        </div>
+      </div>
+
+      <h1 class="disp" style="position: relative; margin: 46px 0 0; font-size: 40px; line-height: 1.08; font-weight: 700; color: #FFFFFF;">
+        Tus números,<br>
+        <span style="color: {{acento}};">al día</span> y sin<br>
+        hojas de cálculo.
+      </h1>
+
+      <p style="position: relative; margin: 18px 0 0; font-size: 14.5px; line-height: 1.55; color: #BCAFE0; font-weight: 500; max-width: 300px;">
+        Registras la operación. El sistema arma el inventario, la cartera y los estados financieros solo.
+      </p>
+
+      <div style="position: relative; margin-top: auto; display: flex; flex-direction: column; gap: 11px;">
+        <div style="display: flex; align-items: center; gap: 11px;">
+          <div style="width: 26px; height: 26px; border-radius: 9px; background: rgba(201,247,63,0.16); display: flex; align-items: center; justify-content: center; flex: 0 0 26px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{acento}}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+          </div>
+          <span style="font-size: 13.5px; color: #D6CCF0; font-weight: 500;">Balance que siempre cuadra</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 11px;">
+          <div style="width: 26px; height: 26px; border-radius: 9px; background: rgba(201,247,63,0.16); display: flex; align-items: center; justify-content: center; flex: 0 0 26px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{acento}}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+          </div>
+          <span style="font-size: 13.5px; color: #D6CCF0; font-weight: 500;">Facturas en PDF al instante</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 11px;">
+          <div style="width: 26px; height: 26px; border-radius: 9px; background: rgba(201,247,63,0.16); display: flex; align-items: center; justify-content: center; flex: 0 0 26px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{acento}}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+          </div>
+          <span style="font-size: 13.5px; color: #D6CCF0; font-weight: 500;">Tus datos no salen del equipo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario -->
+    <div style="flex: 1; padding: 48px 52px; display: flex; flex-direction: column; justify-content: center;">
+      <h2 class="disp" style="margin: 0; font-size: 27px; font-weight: 700;">Bienvenida de vuelta</h2>
+      <p style="margin: 7px 0 30px; font-size: 14px; color: #6E6486; font-weight: 500;">Ingresa para ver cómo va el negocio hoy.</p>
+
+      <label style="font-size: 12.5px; font-weight: 700; color: #4B4266; display: block; margin-bottom: 7px;">Usuario</label>
+      <div style="display: flex; align-items: center; gap: 10px; background: #F5F3FA; border: 1.5px solid #F5F3FA; border-radius: 16px; padding: 14px 16px; margin-bottom: 18px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E82AC" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        <span style="font-size: 14.5px; font-weight: 600; color: #16062B;">admin</span>
+      </div>
+
+      <label style="font-size: 12.5px; font-weight: 700; color: #4B4266; display: block; margin-bottom: 7px;">Contraseña</label>
+      <div style="display: flex; align-items: center; gap: 10px; background: #FFFFFF; border: 1.5px solid {{primario}}; border-radius: 16px; padding: 14px 16px; box-shadow: 0 0 0 4px rgba(123,47,247,0.12); margin-bottom: 26px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{primario}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <span style="font-size: 16px; letter-spacing: 0.22em; color: #16062B;">••••••••</span>
+        <div style="flex: 1;"></div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E82AC" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.6"/></svg>
+      </div>
+
+      <button style="border: 0; cursor: pointer; width: 100%; background: {{primario}}; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 700; border-radius: 999px; padding: 16px; display: flex; align-items: center; justify-content: center; gap: 9px; box-shadow: 0 10px 26px rgba(123,47,247,0.34);">
+        Entrar
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+
+      <div style="margin-top: 30px; padding-top: 22px; border-top: 1.5px dashed #EAE4F6;">
+        <div style="font-size: 12px; font-weight: 800; color: #8E82AC; letter-spacing: 0.05em; margin-bottom: 12px;">USUARIOS DE PRUEBA</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px; background: #F5F3FA; border-radius: 14px; padding: 10px 13px;">
+            <span style="width: 8px; height: 8px; border-radius: 999px; background: {{primario}};"></span>
+            <span class="num" style="font-size: 12.5px; font-weight: 700; color: #16062B;">admin / admin123</span>
+            <div style="flex: 1;"></div>
+            <span style="font-size: 11.5px; color: #6E6486; font-weight: 600;">Administrador</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; background: #F5F3FA; border-radius: 14px; padding: 10px 13px;">
+            <span style="width: 8px; height: 8px; border-radius: 999px; background: #12C48B;"></span>
+            <span class="num" style="font-size: 12.5px; font-weight: 700; color: #16062B;">contador / conta123</span>
+            <div style="flex: 1;"></div>
+            <span style="font-size: 11.5px; color: #6E6486; font-weight: 600;">Contador</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; background: #F5F3FA; border-radius: 14px; padding: 10px 13px;">
+            <span style="width: 8px; height: 8px; border-radius: 999px; background: #FFB020;"></span>
+            <span class="num" style="font-size: 12.5px; font-weight: 700; color: #16062B;">vendedor / venta123</span>
+            <div style="flex: 1;"></div>
+            <span style="font-size: 11.5px; color: #6E6486; font-weight: 600;">Vendedor</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"primario":{"editor":"color","default":"#7B2FF7","options":["#7B2FF7","#820AD1","#5B4BFF","#9A4DFF"],"section":"Paleta"},"acento":{"editor":"color","default":"#C9F73F","options":["#C9F73F","#B8F32C","#7DF7A8","#00E38C"],"section":"Paleta"},"$preview":{"width":1000,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      primario: this.props.primario ?? '#7B2FF7',
+      acento: this.props.acento ?? '#C9F73F'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "Tablero ejecutivo", "x": 0, "y": 0, "w": 1440, "h": 980 },
+    { "file": "Ventas.dc.html", "title": "Ventas y facturación", "x": 1560, "y": 0, "w": 1440, "h": 980 },
+    { "file": "Acceso.dc.html", "title": "Pantalla de acceso", "x": 0, "y": 1120, "w": 1000, "h": 760 },
+    { "file": "Movil.dc.html", "title": "Móvil · 390 px", "x": 1120, "y": 1120, "w": 390, "h": 844 },
+    { "file": "Sistema.dc.html", "title": "Sistema visual", "x": 1630, "y": 1120, "w": 1040, "h": 1400 }
+  ],
+  "annotations": [
+    {
+      "id": "direccion",
+      "x": 0,
+      "y": -190,
+      "w": 560,
+      "text": "DIRECCIÓN\nMorado Nubank + verde ácido, fondo lavanda, esquinas muy redondeadas y botones pastilla.\nOutfit para titulares, Plus Jakarta Sans para la interfaz.\n\nLa estructura no cambia: mismo sidebar, mismos KPIs, misma tabla. Solo la piel."
+    },
+    {
+      "id": "colores-vivos",
+      "x": 1560,
+      "y": -190,
+      "w": 560,
+      "text": "PRUEBA OTROS COLORES\nSobre cada tablero hay dos controles: Primario y Acento.\nCámbialos y toda la pantalla se recolorea —incluidas las gráficas— para comparar combinaciones antes de tocar el CSS."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

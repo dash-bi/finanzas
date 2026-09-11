@@ -1,0 +1,270 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <style>
+    body { margin: 0; font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; background: #F5F3FA; }
+    * { box-sizing: border-box; }
+    a { color: #7B2FF7; text-decoration: none; }
+    a:hover { color: #4B0FA8; }
+    .num { font-variant-numeric: tabular-nums; }
+    .disp { font-family: "Outfit", "Segoe UI", system-ui, sans-serif; letter-spacing: -0.02em; }
+    .th { font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #8E82AC; text-align: left; padding: 0 0 12px; }
+    .td { font-size: 13.5px; font-weight: 500; color: #2E2244; padding: 13px 0; border-top: 1px solid #F1EDF9; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 11px; font-size: 11.5px; font-weight: 800; }
+  </style>
+</helmet>
+
+<div style="display: flex; width: 1440px; height: 980px; overflow: hidden; background: #F5F3FA; color: #16062B;">
+
+  <!-- Barra lateral -->
+  <aside style="width: 260px; flex: 0 0 260px; background: linear-gradient(168deg, #240C46 0%, #170729 62%, #12061F 100%); display: flex; flex-direction: column; padding: 22px 16px 16px;">
+    <div style="display: flex; align-items: center; gap: 11px; padding: 0 8px 24px;">
+      <div style="width: 38px; height: 38px; border-radius: 13px; background: {{acento}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#12061F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V11"/><path d="M10 19V6"/><path d="M16 19v-5"/><path d="M22 19V4"/></svg>
+      </div>
+      <div>
+        <div class="disp" style="font-size: 16px; font-weight: 700; color: #FFFFFF; line-height: 1.1;">Andina</div>
+        <div style="font-size: 11px; color: #9C8EC4; font-weight: 500;">Finanzas</div>
+      </div>
+    </div>
+
+    <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.12em; color: #6F5F9B; padding: 0 12px 8px;">OPERACIÓN</div>
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Tablero</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; background: {{acento}}; color: #12061F;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M6 6v13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6"/><path d="M9 10h6"/></svg>
+        <span style="font-size: 14px; font-weight: 700;">Ventas</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span style="font-size: 14px; font-weight: 500; flex: 1;">Cartera</span>
+        <span class="num" style="font-size: 11px; font-weight: 800; background: #FF4D6D; color: #FFFFFF; border-radius: 999px; padding: 2px 8px;">16</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v13"/><path d="m6 12 6 6 6-6"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Compras</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 12l9 9 9-9z"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Gastos</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 9v12"/></svg>
+        <span style="font-size: 14px; font-weight: 500; flex: 1;">Inventario</span>
+        <span class="num" style="font-size: 11px; font-weight: 800; background: #FFB020; color: #2B1600; border-radius: 999px; padding: 2px 8px;">7</span>
+      </div>
+    </div>
+
+    <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.12em; color: #6F5F9B; padding: 22px 12px 8px;">TERCEROS</div>
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Clientes</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 15px; color: #B9AEDB;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10H3z"/><path d="M8 9V5h8v4"/></svg>
+        <span style="font-size: 14px; font-weight: 500;">Proveedores</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Área principal -->
+  <div style="flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative;">
+
+    <header style="height: 76px; flex: 0 0 76px; background: #FFFFFF; display: flex; align-items: center; gap: 16px; padding: 0 28px; border-bottom: 1px solid #EDE8F7;">
+      <div style="display: flex; align-items: center; gap: 9px; background: #F5F3FA; border-radius: 999px; padding: 9px 16px 9px 13px; width: 300px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E82AC" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span style="font-size: 13px; color: #8E82AC; font-weight: 500;">Buscar factura, cliente…</span>
+      </div>
+      <div style="flex: 1;"></div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 40px; height: 40px; border-radius: 999px; background: {{primario}}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; border: 2.5px solid {{acento}};">LR</div>
+        <div>
+          <div style="font-size: 13px; font-weight: 700; line-height: 1.15;">Laura Restrepo</div>
+          <div style="font-size: 11px; color: #8E82AC; line-height: 1.15;">Administradora</div>
+        </div>
+      </div>
+    </header>
+
+    <main style="flex: 1; overflow: hidden; padding: 26px 28px;">
+      <div style="display: flex; align-items: flex-end; gap: 16px; margin-bottom: 20px;">
+        <div style="flex: 1;">
+          <h1 class="disp" style="margin: 0; font-size: 28px; font-weight: 700; line-height: 1.1;">Ventas y facturación</h1>
+          <p style="margin: 5px 0 0; font-size: 13.5px; color: #6E6486; font-weight: 500;">Cada factura descuenta inventario y abre la cuenta por cobrar.</p>
+        </div>
+        <button style="border: 0; cursor: pointer; background: {{primario}}; color: #FFFFFF; font-family: inherit; font-size: 13.5px; font-weight: 700; border-radius: 999px; padding: 12px 22px; display: flex; align-items: center; gap: 8px; box-shadow: 0 6px 18px rgba(123,47,247,0.32);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nueva venta
+        </button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px;">
+        <article style="background: linear-gradient(150deg, #2C1052 0%, #170729 100%); border-radius: 22px; padding: 16px 19px; color: #FFFFFF;">
+          <div style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; color: #C7B9EA;">VENTAS DEL MES</div>
+          <div class="disp num" style="font-size: 24px; font-weight: 700; margin-top: 8px;">$ 19.564.810</div>
+          <div style="font-size: 11.5px; color: #A99AD1; margin-top: 5px;">11 facturas en sep 2026</div>
+        </article>
+        <article style="background: #FFFFFF; border-radius: 22px; padding: 16px 19px;">
+          <div style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; color: #8E82AC;">UTILIDAD BRUTA</div>
+          <div class="disp num" style="font-size: 24px; font-weight: 700; margin-top: 8px;">$ 8.087.685</div>
+          <span class="pill" style="background: #E4FBF2; color: #0B8C63; margin-top: 5px;">41,3 %</span>
+        </article>
+        <article style="background: #FFFFFF; border-radius: 22px; padding: 16px 19px;">
+          <div style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; color: #8E82AC;">TICKET PROMEDIO</div>
+          <div class="disp num" style="font-size: 24px; font-weight: 700; margin-top: 8px;">$ 1.778.619</div>
+          <div style="font-size: 11.5px; color: #8E82AC; margin-top: 5px;">Sin IVA, por factura</div>
+        </article>
+        <article style="background: {{acento}}; border-radius: 22px; padding: 16px 19px; color: #12061F;">
+          <div style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; color: #46560A;">CARTERA ABIERTA</div>
+          <div class="disp num" style="font-size: 24px; font-weight: 700; margin-top: 8px;">$ 23.501.759</div>
+          <div style="font-size: 11.5px; color: #46560A; margin-top: 5px; font-weight: 600;">23 facturas con saldo</div>
+        </article>
+      </div>
+
+      <section style="background: #FFFFFF; border-radius: 26px; padding: 20px 24px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 9px; background: #F5F3FA; border-radius: 999px; padding: 10px 16px 10px 14px; flex: 1; max-width: 340px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8E82AC" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <span style="font-size: 13px; color: #8E82AC; font-weight: 500;">Buscar por factura, cliente o estado…</span>
+          </div>
+          <div style="flex: 1;"></div>
+          <span class="pill" style="background: #F0E7FF; color: {{primario}};">Todas</span>
+          <span class="pill" style="background: #F5F3FA; color: #6E6486;">Pendientes</span>
+          <span class="pill" style="background: #F5F3FA; color: #6E6486;">Vencidas</span>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th class="th">FACTURA</th>
+              <th class="th">FECHA</th>
+              <th class="th">CLIENTE</th>
+              <th class="th">CONDICIÓN</th>
+              <th class="th" style="text-align: right;">TOTAL</th>
+              <th class="th" style="text-align: right;">UTILIDAD</th>
+              <th class="th" style="text-align: right;">SALDO</th>
+              <th class="th" style="text-align: center;">ESTADO</th>
+              <th class="th"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td" style="font-weight: 800;">FV-0233</td>
+              <td class="td num" style="color: #6E6486;">09 sep 2026</td>
+              <td class="td" style="font-weight: 600;">Ferretería El Tornillo S.A.S.</td>
+              <td class="td" style="color: #6E6486;">Crédito 45 d</td>
+              <td class="td num" style="text-align: right; font-weight: 700;">$ 986.510</td>
+              <td class="td num" style="text-align: right; color: #0B8C63; font-weight: 700;">$ 447.117</td>
+              <td class="td num" style="text-align: right; font-weight: 700;">$ 986.510</td>
+              <td class="td" style="text-align: center;"><span class="pill" style="background: #EAF6FF; color: #1D6FA8;">Pendiente</span></td>
+              <td class="td" style="text-align: right;">
+                <div style="display: flex; gap: 7px; justify-content: flex-end;">
+                  <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 11px; background: #F5F3FA;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4B4266" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.6"/></svg></span>
+                  <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 11px; background: #F5F3FA;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4B4266" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg></span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="td" style="font-weight: 800;">FV-0238</td>
+              <td class="td num" style="color: #6E6486;">09 sep 2026</td>
+              <td class="td" style="font-weight: 600;">Ferretería El Tornillo S.A.S.</td>
+              <td class="td" style="color: #6E6486;">Crédito 45 d</td>
+              <td class="td num" style="text-align: right; font-weight: 700;">$ 1.498.281</td>
+              <td class="td num" style="text-align: right; color: #0B8C63; font-weight: 700;">$ 495.294</td>
+              <td class="td num" style="text-align: right; font-weight: 700;">$ 1.498.281</td>
+              <td class="td" style="text-align: center;"><span class="pill" style="background: #EAF6FF; color: #1D6FA8;">Pendiente</span></td>
+              <td class="td"></td>
+            </tr>
+            <tr>
+              <td class="td" style="font-weight: 800;">FV-0234</td>
+              <td class="td num" style="color: #6E6486;">08 sep 2026</td>
+              <td class="td" style="font-weight: 600;">Grupo Logístico Aburrá</td>
+              <td class="td" style="color: #6E6486;">Contado</td>
+              <td class="td num" style="text-align: right; font-weight: 700;">$ 4.034.100</td>
+              <td class="td num" style="text-align: right; color: #0B8C63; font-weight: 700;">$ 772.577</td>
+              <td class="td num" style="text-align: right; color: #8E82AC;">$ 0</td>
+              <td class="td" style="text-align: center;"><span class="pill" style="background: #E4FBF2; color: #0B8C63;">Pagada</span></td>
+              <td class="td"></td>
+            </tr>
+            <tr>
+              <td class="td" style="font-weight: 800;">FV-0058</td>
+              <td class="td num" style="color: #6E6486;">02 mar 2026</td>
+              <td class="td" style="font-weight: 600;">Comercializadora Sur Ltda.</td>
+              <td class="td" style="color: #6E6486;">Crédito 15 d</td>
+              <td class="td num" style="text-align: right; font-weight: 700;">$ 1.345.610</td>
+              <td class="td num" style="text-align: right; color: #0B8C63; font-weight: 700;">$ 402.980</td>
+              <td class="td num" style="text-align: right; font-weight: 700; color: #C22B48;">$ 351.378</td>
+              <td class="td" style="text-align: center;"><span class="pill" style="background: #FFE9EE; color: #C22B48;">Vencida</span></td>
+              <td class="td"></td>
+            </tr>
+            <tr>
+              <td class="td" style="font-weight: 800;">FV-0231</td>
+              <td class="td num" style="color: #6E6486;">03 sep 2026</td>
+              <td class="td" style="font-weight: 600;">Andrés Villegas Mora</td>
+              <td class="td" style="color: #6E6486;">Contado</td>
+              <td class="td num" style="text-align: right; font-weight: 700;">$ 1.069.513</td>
+              <td class="td num" style="text-align: right; color: #0B8C63; font-weight: 700;">$ 311.885</td>
+              <td class="td num" style="text-align: right; color: #8E82AC;">$ 0</td>
+              <td class="td" style="text-align: center;"><span class="pill" style="background: #E4FBF2; color: #0B8C63;">Pagada</span></td>
+              <td class="td"></td>
+            </tr>
+            <tr>
+              <td class="td" style="font-weight: 800;">FV-0236</td>
+              <td class="td num" style="color: #6E6486;">03 sep 2026</td>
+              <td class="td" style="font-weight: 600;">Grupo Logístico Aburrá</td>
+              <td class="td" style="color: #6E6486;">Contado</td>
+              <td class="td num" style="text-align: right; font-weight: 700;">$ 3.639.020</td>
+              <td class="td num" style="text-align: right; color: #0B8C63; font-weight: 700;">$ 1.243.356</td>
+              <td class="td num" style="text-align: right; color: #8E82AC;">$ 0</td>
+              <td class="td" style="text-align: center;"><span class="pill" style="background: #E4FBF2; color: #0B8C63;">Pagada</span></td>
+              <td class="td"></td>
+            </tr>
+            <tr>
+              <td class="td" style="font-weight: 800;">FV-0090</td>
+              <td class="td num" style="color: #6E6486;">22 abr 2026</td>
+              <td class="td" style="font-weight: 600;">Oficinas Modernas S.A.</td>
+              <td class="td" style="color: #6E6486;">Crédito 30 d</td>
+              <td class="td num" style="text-align: right; font-weight: 700;">$ 791.350</td>
+              <td class="td num" style="text-align: right; color: #0B8C63; font-weight: 700;">$ 265.104</td>
+              <td class="td num" style="text-align: right; font-weight: 700; color: #B5761A;">$ 385.996</td>
+              <td class="td" style="text-align: center;"><span class="pill" style="background: #FFF3DC; color: #B5761A;">Abono parcial</span></td>
+              <td class="td"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 1px solid #F1EDF9; margin-top: 4px;">
+          <span style="font-size: 12.5px; color: #8E82AC; font-weight: 600;">1–12 de 241 facturas</span>
+          <div style="display: flex; gap: 8px;">
+            <span style="display: inline-flex; align-items: center; justify-content: center; height: 34px; padding: 0 15px; border-radius: 999px; background: #F5F3FA; font-size: 12.5px; font-weight: 700; color: #A79BC4;">‹ Anterior</span>
+            <span style="display: inline-flex; align-items: center; justify-content: center; height: 34px; padding: 0 15px; border-radius: 999px; background: {{primario}}; color: #FFFFFF; font-size: 12.5px; font-weight: 700;">Siguiente ›</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"primario":{"editor":"color","default":"#7B2FF7","options":["#7B2FF7","#820AD1","#5B4BFF","#9A4DFF"],"section":"Paleta"},"acento":{"editor":"color","default":"#C9F73F","options":["#C9F73F","#B8F32C","#7DF7A8","#00E38C"],"section":"Paleta"},"$preview":{"width":1440,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      primario: this.props.primario ?? '#7B2FF7',
+      acento: this.props.acento ?? '#C9F73F'
+    };
+  }
+}
+</script>
+</body>
+</html>

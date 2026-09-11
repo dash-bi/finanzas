@@ -1,0 +1,256 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <style>
+    body { margin: 0; font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; background: #F5F3FA; }
+    * { box-sizing: border-box; }
+    a { color: #7B2FF7; text-decoration: none; }
+    a:hover { color: #4B0FA8; }
+    .disp { font-family: "Outfit", "Segoe UI", system-ui, sans-serif; letter-spacing: -0.02em; }
+    .num { font-variant-numeric: tabular-nums; }
+    .mono { font-family: "Cascadia Mono", Consolas, monospace; }
+    .sec { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: #8E82AC; margin: 0 0 14px; }
+    .card { background: #FFFFFF; border-radius: 24px; padding: 22px 24px; }
+    .sw { border-radius: 18px; height: 72px; display: flex; align-items: flex-end; padding: 10px 12px; }
+    .swname { font-size: 11.5px; font-weight: 800; }
+    .swmeta { font-size: 10.5px; font-weight: 600; margin-top: 2px; }
+    .btn { border: 0; font-family: inherit; font-weight: 700; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  </style>
+</helmet>
+
+<div style="width: 1040px; min-height: 1400px; background: #F5F3FA; padding: 36px 38px; color: #16062B;">
+
+  <div style="margin-bottom: 26px;">
+    <div style="display: inline-flex; align-items: center; gap: 8px; background: {{acento}}; color: #12061F; border-radius: 999px; padding: 6px 14px; font-size: 11.5px; font-weight: 800; letter-spacing: 0.04em; margin-bottom: 12px;">SISTEMA VISUAL</div>
+    <h1 class="disp" style="margin: 0; font-size: 34px; font-weight: 700;">Fichas de estilo</h1>
+    <p style="margin: 7px 0 0; font-size: 14.5px; color: #6E6486; font-weight: 500; max-width: 620px;">
+      Todo lo que hay que cambiar vive en <span class="mono" style="background: #EFEAFA; padding: 2px 7px; border-radius: 7px; font-size: 13px;">assets/CSS/base.css</span>. Los nombres de variable son los que ya usa la aplicación: se cambia el valor, no el código.
+    </p>
+  </div>
+
+  <!-- PALETA -->
+  <div class="card" style="margin-bottom: 16px;">
+    <p class="sec">PALETA</p>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px;">
+      <div>
+        <div class="sw" style="background: {{primario}};">
+          <div>
+            <div class="swname" style="color: #FFFFFF;">Morado</div>
+            <div class="swmeta mono" style="color: rgba(255,255,255,0.72);">--primary</div>
+          </div>
+        </div>
+        <div class="mono" style="font-size: 11.5px; color: #6E6486; margin-top: 7px; font-weight: 600;">#7B2FF7</div>
+      </div>
+      <div>
+        <div class="sw" style="background: #4B0FA8;">
+          <div>
+            <div class="swname" style="color: #FFFFFF;">Morado hover</div>
+            <div class="swmeta mono" style="color: rgba(255,255,255,0.72);">--primary-hover</div>
+          </div>
+        </div>
+        <div class="mono" style="font-size: 11.5px; color: #6E6486; margin-top: 7px; font-weight: 600;">#4B0FA8</div>
+      </div>
+      <div>
+        <div class="sw" style="background: {{acento}};">
+          <div>
+            <div class="swname" style="color: #12061F;">Verde vivo</div>
+            <div class="swmeta mono" style="color: rgba(18,6,31,0.62);">--accent</div>
+          </div>
+        </div>
+        <div class="mono" style="font-size: 11.5px; color: #6E6486; margin-top: 7px; font-weight: 600;">#C9F73F</div>
+      </div>
+      <div>
+        <div class="sw" style="background: #170729;">
+          <div>
+            <div class="swname" style="color: #FFFFFF;">Noche</div>
+            <div class="swmeta mono" style="color: rgba(255,255,255,0.62);">--night</div>
+          </div>
+        </div>
+        <div class="mono" style="font-size: 11.5px; color: #6E6486; margin-top: 7px; font-weight: 600;">#170729</div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px;">
+      <div>
+        <div class="sw" style="background: #F5F3FA; height: 56px; border: 1px solid #E9E3F6;"></div>
+        <div style="font-size: 11.5px; font-weight: 700; margin-top: 7px;">Fondo</div>
+        <div class="mono" style="font-size: 10.5px; color: #8E82AC; font-weight: 600;">--bg · #F5F3FA</div>
+      </div>
+      <div>
+        <div class="sw" style="background: #FFFFFF; height: 56px; border: 1px solid #E9E3F6;"></div>
+        <div style="font-size: 11.5px; font-weight: 700; margin-top: 7px;">Superficie</div>
+        <div class="mono" style="font-size: 10.5px; color: #8E82AC; font-weight: 600;">--surface · #FFFFFF</div>
+      </div>
+      <div>
+        <div class="sw" style="background: #12C48B; height: 56px;"></div>
+        <div style="font-size: 11.5px; font-weight: 700; margin-top: 7px;">Positivo</div>
+        <div class="mono" style="font-size: 10.5px; color: #8E82AC; font-weight: 600;">--success · #12C48B</div>
+      </div>
+      <div>
+        <div class="sw" style="background: #FF4D6D; height: 56px;"></div>
+        <div style="font-size: 11.5px; font-weight: 700; margin-top: 7px;">Negativo</div>
+        <div class="mono" style="font-size: 10.5px; color: #8E82AC; font-weight: 600;">--danger · #FF4D6D</div>
+      </div>
+      <div>
+        <div class="sw" style="background: #FFB020; height: 56px;"></div>
+        <div style="font-size: 11.5px; font-weight: 700; margin-top: 7px;">Alerta</div>
+        <div class="mono" style="font-size: 10.5px; color: #8E82AC; font-weight: 600;">--warning · #FFB020</div>
+      </div>
+      <div>
+        <div class="sw" style="background: #16062B; height: 56px;"></div>
+        <div style="font-size: 11.5px; font-weight: 700; margin-top: 7px;">Texto</div>
+        <div class="mono" style="font-size: 10.5px; color: #8E82AC; font-weight: 600;">--text · #16062B</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; padding-top: 18px; border-top: 1px solid #F1EDF9;">
+      <div style="font-size: 12px; font-weight: 800; color: #8E82AC; letter-spacing: 0.05em; margin-bottom: 10px;">SERIES DE GRÁFICOS · --c1 … --c6</div>
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 1; height: 34px; border-radius: 11px; background: {{primario}};"></div>
+        <div style="flex: 1; height: 34px; border-radius: 11px; background: {{acento}};"></div>
+        <div style="flex: 1; height: 34px; border-radius: 11px; background: #12C48B;"></div>
+        <div style="flex: 1; height: 34px; border-radius: 11px; background: #FFB020;"></div>
+        <div style="flex: 1; height: 34px; border-radius: 11px; background: #2C8FD8;"></div>
+        <div style="flex: 1; height: 34px; border-radius: 11px; background: #FF4D6D;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIPOGRAFÍA -->
+  <div style="display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; margin-bottom: 16px;">
+    <div class="card">
+      <p class="sec">TIPOGRAFÍA</p>
+      <div class="disp" style="font-size: 34px; font-weight: 700; line-height: 1.1;">Outfit · titulares</div>
+      <div style="font-size: 12px; color: #8E82AC; font-weight: 600; margin-top: 4px; margin-bottom: 18px;">700 / 800 · interletrado −0.02em</div>
+
+      <div style="font-size: 20px; font-weight: 700;">Plus Jakarta Sans · interfaz</div>
+      <div style="font-size: 12px; color: #8E82AC; font-weight: 600; margin-top: 4px; margin-bottom: 18px;">400 / 500 / 600 / 700 / 800</div>
+
+      <div style="display: flex; flex-direction: column; gap: 9px; padding-top: 16px; border-top: 1px solid #F1EDF9;">
+        <div style="display: flex; align-items: baseline; gap: 14px;"><span class="disp" style="font-size: 30px; font-weight: 700; width: 210px;">Título de vista</span><span class="mono" style="font-size: 11.5px; color: #8E82AC;">30 / 700 / Outfit</span></div>
+        <div style="display: flex; align-items: baseline; gap: 14px;"><span class="disp num" style="font-size: 27px; font-weight: 700; width: 210px;">$ 19.564.810</span><span class="mono" style="font-size: 11.5px; color: #8E82AC;">27 / 700 / tabular</span></div>
+        <div style="display: flex; align-items: baseline; gap: 14px;"><span style="font-size: 16px; font-weight: 700; width: 210px;">Título de tarjeta</span><span class="mono" style="font-size: 11.5px; color: #8E82AC;">16 / 700</span></div>
+        <div style="display: flex; align-items: baseline; gap: 14px;"><span style="font-size: 13.5px; font-weight: 500; width: 210px;">Texto de tabla y párrafo</span><span class="mono" style="font-size: 11.5px; color: #8E82AC;">13,5 / 500</span></div>
+        <div style="display: flex; align-items: baseline; gap: 14px;"><span style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #8E82AC; width: 210px;">ETIQUETA DE KPI</span><span class="mono" style="font-size: 11.5px; color: #8E82AC;">11 / 800 / 0.06em</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="sec">RADIOS Y SOMBRA</p>
+      <div style="display: flex; gap: 12px; align-items: flex-end; margin-bottom: 22px;">
+        <div style="text-align: center;">
+          <div style="width: 62px; height: 62px; background: #F0E7FF; border-radius: 14px;"></div>
+          <div class="mono" style="font-size: 11px; color: #6E6486; margin-top: 7px; font-weight: 600;">14px</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="width: 62px; height: 62px; background: #F0E7FF; border-radius: 20px;"></div>
+          <div class="mono" style="font-size: 11px; color: #6E6486; margin-top: 7px; font-weight: 600;">20px</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="width: 62px; height: 62px; background: #F0E7FF; border-radius: 26px;"></div>
+          <div class="mono" style="font-size: 11px; color: #6E6486; margin-top: 7px; font-weight: 600;">26px</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="width: 62px; height: 62px; background: #F0E7FF; border-radius: 999px;"></div>
+          <div class="mono" style="font-size: 11px; color: #6E6486; margin-top: 7px; font-weight: 600;">pill</div>
+        </div>
+      </div>
+
+      <div style="font-size: 12px; font-weight: 800; color: #8E82AC; letter-spacing: 0.05em; margin-bottom: 12px;">TARJETAS SIN BORDE</div>
+      <p style="margin: 0; font-size: 13px; color: #6E6486; line-height: 1.55; font-weight: 500;">
+        Las tarjetas pierden el borde de 1px y el filo de color a la izquierda. Ahora se separan del fondo lavanda por contraste y una sombra muy suave:
+        <span class="mono" style="background: #F5F3FA; padding: 2px 6px; border-radius: 6px; font-size: 12px;">0 1px 2px rgba(22,6,43,.07)</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- COMPONENTES -->
+  <div class="card" style="margin-bottom: 16px;">
+    <p class="sec">BOTONES</p>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px;">
+      <button class="btn" style="background: {{primario}}; color: #FFFFFF; font-size: 13.5px; padding: 12px 22px; box-shadow: 0 6px 18px rgba(123,47,247,0.32);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Nueva venta
+      </button>
+      <button class="btn" style="background: {{acento}}; color: #12061F; font-size: 13.5px; padding: 12px 22px;">Registrar abono</button>
+      <button class="btn" style="background: #FFFFFF; color: #16062B; font-size: 13.5px; padding: 12px 22px; box-shadow: 0 1px 2px rgba(22,6,43,0.09);">Exportar</button>
+      <button class="btn" style="background: transparent; color: {{primario}}; font-size: 13.5px; padding: 12px 18px;">Limpiar filtros</button>
+      <button class="btn" style="background: #FF4D6D; color: #FFFFFF; font-size: 13.5px; padding: 12px 22px;">Anular factura</button>
+      <button class="btn" style="background: #EFEAFA; color: #A79BC4; font-size: 13.5px; padding: 12px 22px;">Deshabilitado</button>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 18px; border-top: 1px solid #F1EDF9;">
+      <span style="display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 12px; font-size: 11.5px; font-weight: 800; background: #E4FBF2; color: #0B8C63;">Pagada</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 12px; font-size: 11.5px; font-weight: 800; background: #EAF6FF; color: #1D6FA8;">Pendiente</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 12px; font-size: 11.5px; font-weight: 800; background: #FFF3DC; color: #B5761A;">Abono parcial</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 12px; font-size: 11.5px; font-weight: 800; background: #FFE9EE; color: #C22B48;">Vencida</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 12px; font-size: 11.5px; font-weight: 800; background: #F0EDF7; color: #6E6486;">Anulada</span>
+      <div style="flex: 1;"></div>
+      <div style="display: flex; align-items: center; gap: 9px; background: #F5F3FA; border-radius: 999px; padding: 10px 16px 10px 14px; width: 260px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8E82AC" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span style="font-size: 13px; color: #8E82AC; font-weight: 500;">Campo de búsqueda</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANTES Y DESPUÉS -->
+  <div class="card">
+    <p class="sec">QUÉ CAMBIA EN LA TARJETA DE KPI</p>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px;">
+
+      <div>
+        <div style="font-size: 12px; font-weight: 800; color: #8E82AC; margin-bottom: 10px;">ANTES</div>
+        <div style="background: #FFFFFF; border: 1px solid #DDE3ED; border-radius: 16px; padding: 16px 24px; position: relative; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif;">
+          <div style="position: absolute; inset: 0 auto 0 0; width: 4px; background: #2F5BDC;"></div>
+          <div style="font-size: 12px; font-weight: 600; color: #5B6779; text-transform: uppercase; letter-spacing: 0.04em;">Ingresos totales</div>
+          <div class="num" style="font-size: 24px; font-weight: 700; color: #101828; margin-top: 4px;">$ 19.564.810</div>
+          <div style="font-size: 12px; color: #8A94A6; margin-top: 4px;">11 facturas · 44 unidades</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 12px; font-weight: 800; color: {{primario}}; margin-bottom: 10px;">DESPUÉS</div>
+        <div style="background: linear-gradient(150deg, #2C1052 0%, #170729 100%); border-radius: 24px; padding: 18px 20px; color: #FFFFFF; position: relative; overflow: hidden;">
+          <div style="position: absolute; right: -28px; top: -28px; width: 110px; height: 110px; border-radius: 999px; background: {{primario}}; opacity: 0.34;"></div>
+          <div style="position: relative; display: flex; align-items: center; gap: 9px;">
+            <div style="width: 30px; height: 30px; border-radius: 10px; background: {{acento}}; display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#12061F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 10 12l4 4 6-8"/></svg>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #C7B9EA;">INGRESOS TOTALES</span>
+          </div>
+          <div class="disp num" style="position: relative; font-size: 27px; font-weight: 700; margin-top: 13px;">$ 19.564.810</div>
+          <div style="position: relative; display: flex; align-items: center; gap: 7px; margin-top: 9px;">
+            <span style="background: {{acento}}; color: #12061F; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 3px 9px;">+12,8 %</span>
+            <span style="font-size: 11.5px; color: #A99AD1;">44 unidades</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin: 20px 0 0; font-size: 13px; color: #6E6486; line-height: 1.6; font-weight: 500;">
+      La estructura es la misma —etiqueta, valor, contexto—: cambian el radio, el filo lateral por un icono en pastilla, el peso tipográfico y el color. Por eso el cambio se hace en CSS sin tocar <span class="mono" style="background: #F5F3FA; padding: 2px 6px; border-radius: 6px; font-size: 12px;">ui.js</span>.
+    </p>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"primario":{"editor":"color","default":"#7B2FF7","options":["#7B2FF7","#820AD1","#5B4BFF","#9A4DFF"],"section":"Paleta"},"acento":{"editor":"color","default":"#C9F73F","options":["#C9F73F","#B8F32C","#7DF7A8","#00E38C"],"section":"Paleta"},"$preview":{"width":1040,"height":1400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      primario: this.props.primario ?? '#7B2FF7',
+      acento: this.props.acento ?? '#C9F73F'
+    };
+  }
+}
+</script>
+</body>
+</html>
