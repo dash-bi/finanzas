@@ -4,6 +4,10 @@
 
 window.ERP = window.ERP || {};
 
+/* Versión publicada. Al cambiarla, actualizar también el ?v= de index.html
+   para que el navegador no reutilice los archivos anteriores. */
+ERP.VERSION = '1.4.1';
+
 /* ============================================================
    Configuración del sistema (solo administrador)
    ============================================================ */
@@ -500,7 +504,8 @@ ERP.app = (() => {
                     el('img', { attrs: { src: 'assets/IMG/logo.svg', alt: '' } }),
                     el('div', {}, [
                         el('h1', { text: 'Gestión Financiera' }),
-                        el('p', { text: ERP.db.config().empresa })
+                        el('p', { text: ERP.db.config().empresa }),
+                        el('p', { class: 'hint', text: `Versión ${ERP.VERSION}` })
                     ])
                 ]),
                 formulario
@@ -556,7 +561,8 @@ ERP.app = (() => {
                 el('img', { attrs: { src: 'assets/IMG/logo.svg', alt: '' } }),
                 el('div', { class: 'sidebar-title' }, [
                     el('span', { text: 'ERP Financiero', style: { fontWeight: '700', fontSize: '0.9rem' } }),
-                    el('span', { text: U.truncate(ERP.db.config().empresa, 26) })
+                    el('span', { text: U.truncate(ERP.db.config().empresa, 26) }),
+                    el('span', { class: 'sidebar-version', text: `Versión ${ERP.VERSION}` })
                 ])
             ]),
             nav

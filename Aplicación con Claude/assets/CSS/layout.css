@@ -102,6 +102,7 @@
 
 .sidebar-title { font-family: var(--font-display); font-weight: 700; font-size: 0.98rem; white-space: nowrap; color: #ffffff; }
 .sidebar-title span { display: block; font-family: var(--font-sans); font-weight: 500; font-size: 0.7rem; color: #9c8ec4; }
+.sidebar-title .sidebar-version { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; color: #8f7fbe; }
 
 .sidebar-nav {
     flex: 1 1 auto;

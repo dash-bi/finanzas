@@ -13,11 +13,12 @@ ERP y sistema de gestión financiera integral, tipo SaaS local: sitio estático 
 
 ## Versiones
 
-**Regla del usuario:** cada cambio al sistema se registra aquí como una versión nueva, en el mismo commit que el cambio. Se usa `MAYOR.MENOR.PARCHE`: la menor sube con funcionalidades y el parche con correcciones. El hash de la versión en curso se completa al registrar la siguiente.
+**Regla del usuario:** cada cambio al sistema se registra aquí como una versión nueva, en el mismo commit que el cambio. Al subir la versión hay que tocar tres sitios: esta tabla, `ERP.VERSION` en `app.js` y el `?v=` de los `<link>` y `<script>` de `index.html`. Se usa `MAYOR.MENOR.PARCHE`: la menor sube con funcionalidades y el parche con correcciones. El hash de la versión en curso se completa al registrar la siguiente.
 
 | Versión | Fecha | Commit | Cambios |
 | --- | --- | --- | --- |
-| 1.4.0 | 2026-09-11 | *(esta versión)* | **Permisos por rol configurables:** en Configuración → Permisos por rol el administrador marca qué módulos ve Contador y Vendedor, y el menú, la navegación y la importación de PDF respetan esa selección al instante, también en otras pestañas. Configuración sigue siendo solo del administrador y cada rol debe conservar al menos un módulo. Al entrar se abre el tablero o, si el rol no lo tiene, su primer módulo permitido. **Limpieza de la raíz:** se eliminan `Agents.md`, `CLAUDE.md` y `README.md`; `vercel.json` y `.gitignore` permanecen en la raíz; `historial.md` pasa a la app. |
+| 1.4.1 | 2026-09-12 | *(esta versión)* | **Versión visible y sin caché:** `ERP.VERSION` se muestra en la cabecera del menú y en la pantalla de acceso, los archivos se piden con `?v=` y `vercel.json` obliga a revalidar, para poder confirmar de un vistazo qué versión sirve el navegador. |
+| 1.4.0 | 2026-09-11 | `e094632` | **Permisos por rol configurables:** en Configuración → Permisos por rol el administrador marca qué módulos ve Contador y Vendedor, y el menú, la navegación y la importación de PDF respetan esa selección al instante, también en otras pestañas. Configuración sigue siendo solo del administrador y cada rol debe conservar al menos un módulo. Al entrar se abre el tablero o, si el rol no lo tiene, su primer módulo permitido. **Limpieza de la raíz:** se eliminan `Agents.md`, `CLAUDE.md` y `README.md`; `vercel.json` y `.gitignore` permanecen en la raíz; `historial.md` pasa a la app. |
 | — | 2026-09-11 | `5fdd007`, `6cdff0a`, `ebfbcdd` | Commits hechos desde la web de GitHub («Update index.html / base.css / components.css») sin cambios de contenido. |
 | 1.3.3 | 2026-09-11 | `65eb224` | La pantalla de acceso deja de mostrar usuarios y contraseñas; contraseñas de la semilla guardadas como hash; credenciales enmascaradas en los bocetos. |
 | 1.3.2 | 2026-09-11 | `3545039` | Bocetos de diseño publicados en `.design/`. |
